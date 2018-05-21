@@ -17,12 +17,12 @@
 UDPClient::UDPClient(int port, std::string ip){
   int socketd = 0;
   if ((socketd = socket(AF_INET, SOCK_DGRAM, 0)) == -1){
-        fprintf(stderr,"[Error] Could not open socket.\n");
+        std::cout << "[Error] Could not open socket." << std::endl;
   }
 
   struct hostent* server_host = gethostbyname(ip.c_str());
   if (server_host == NULL) {
-        fprintf(stderr,"[Error] Host not found.\n");
+        std::cout << "[Error] Host not found." << std::endl;
         exit(0);
     }
 
@@ -32,8 +32,8 @@ UDPClient::UDPClient(int port, std::string ip){
   sockaddr.sin_addr = *((struct in_addr *)server_host->h_addr);
   bzero(&(sockaddr.sin_zero), 8);
 
-  this->socketDesc = socketd;
-  this->socketAddr = sockaddr;
+  socketDesc = socketd;
+  socketAddr = sockaddr;
 }
 
 UDPClient::~UDPClient(void){
@@ -43,7 +43,7 @@ UDPClient::~UDPClient(void){
 UDPServer::UDPServer(int port){
   int socketd = socket(AF_INET, SOCK_DGRAM, 0);
   if (socketd == -1){
-        fprintf(stderr,"[Error] Could not open socket.\n");
+        std::cout << "[Error] Could not open socket." << std::endl;
   }
 
   struct sockaddr_in sockaddr;
@@ -66,20 +66,21 @@ UDPServer::~UDPServer(void){
 ///////////////////////////////////////////////////////////
 
 struct sockaddr_in* UDPSocket::getAddr(){
-  return &this->socketAddr;
+  return &socketAddr;
 }
 
 int UDPSocket::getSocketDesc(){
-  return this->socketDesc;
+  return socketDesc;
 }
 
 struct sockaddr_in* UDPConnection::getAddrFrom(){
-  return &this->socketAddrFrom;
+  return &socketAddrFrom;
 }
 
 // n = recvfrom(sockfd, buf, 256, 0, (struct sockaddr *) &cli_addr, &clilen);
 
 void UDPConnection::sendDatagram(Datagram dg) {
+  socklen_t socketSize = sizeof(socketAddr);
   char ack[3] = {0,0,0};
   int status = 0;
 
@@ -89,20 +90,21 @@ void UDPConnection::sendDatagram(Datagram dg) {
   setsockopt(this->getSocketDesc(), SOL_SOCKET, SO_RCVTIMEO, &read_timeout, sizeof read_timeout);
 
   while(true){
-    status = sendto(this->getSocketDesc(),
+    status = sendto(getSocketDesc(),
                  (char*) &dg,
                  DGRAMSIZE,
                  0,
-                 (const struct sockaddr *) &this->socketAddr,
-                 sizeof(struct sockaddr_in)
+                 (const struct sockaddr *) &socketAddr,
+                 socketSize
     );
     if (status >= 0){
-      recvfrom(this->getSocketDesc(),
+      socklen_t socketSize = sizeof(socketAddrFrom);
+      recvfrom(getSocketDesc(),
                ack,
                3,
                0,
-               (const struct sockaddr *) &this->socketAddrFrom,
-               sizeof(struct sockaddr_in)
+               (const struct sockaddr *) &socketAddrFrom,
+               &socketSize
       );
       if (strcmp(ack, "ack")){
 
@@ -112,57 +114,58 @@ void UDPConnection::sendDatagram(Datagram dg) {
 }
 
 void UDPConnection::recDatagram(){
+  socklen_t socketSize = sizeof(socketAddr);
   struct timeval read_timeout;
   read_timeout.tv_sec = 0;
-  read_timeout.tv_usec = 0; // 0.3 seconds
-  setsockopt(this->getSocketDesc(),
+  read_timeout.tv_usec = 0;
+  setsockopt(socketDesc,
              SOL_SOCKET, SO_RCVTIMEO,
              &read_timeout,
-             sizeof read_timeou
+             sizeof(read_timeout)
   );
 
-  int status = recvfrom(this->getSocketDesc(),
+  int status = recvfrom(getSocketDesc(),
                &recvbuffer,
                DGRAMSIZE,
                0,
-               (const struct sockaddr *) &this->socketAddrFrom,
-               sizeof(struct sockaddr_in)
+               (const struct sockaddr *) &socketAddrFrom,
+               &socketSize
   );
   if (status < 0){
-    cout << "[Erro] Could not receive Datagram." << endl;
+    std::cout << "[Erro] Could not receive Datagram." << std::endl;
   } else {
-    int status = sendto(this->getSocketDesc(),
-                 "ack",
-                 3,
-                 0,
-                 (const struct sockaddr *) &this->getAddrFrom,
-                 sizeof(struct sockaddr_in)
+    sendto(socketDesc,
+           "ack",
+           3,
+           0,
+           (const struct sockaddr *) &socketAddrFrom,
+           socketSize
     );
-    break;
   }
 }
 
-void UDPServer::bind(){
-  if (bind(sockfd, (struct sockaddr *) &UDPServer::socketAddr, sizeof(struct sockaddr)) < 0){
-    printf("[Error] could not bind the given socket to the given address.");
+void UDPServer::ibind(){
+  if (bind(socketDesc, (struct sockaddr *) &socketAddr, sizeof(struct sockaddr)) < 0){
+    std::cout << "[Error] could not bind the given socket to the given address." << std::endl;
     exit(0);
   }
 }
 
-void UDPServer::bindAddr(struct sockaddr_in boundAddr){
-  if (bind(sockfd, (struct sockaddr *) &boundAddr, sizeof(struct sockaddr)) < 0){
-    printf("[Error] could not bind the given socket to the given address.");
+void UDPServer::ibindAddr(struct sockaddr_in boundAddr){
+  if (bind(socketDesc, (struct sockaddr *) &boundAddr, sizeof(struct sockaddr)) < 0){
+    std::cout << "[Error] could not bind the given socket to the given address." << std::endl;
     exit(0);
   }
 }
 
 int UDPClient::connect(){
+  socklen_t socketSize = sizeof(socketAddr);
   int status = sendto(this->getSocketDesc(),
                &sendbuffer,
                DGRAMSIZE,
                0,
-               (const struct sockaddr *) &this->getAddrFrom(),
-               sizeof(struct sockaddr_in)
+               (const struct sockaddr *) &socketAddr,
+               socketSize
   );
   if (status >= 0){
     this->connected = true;

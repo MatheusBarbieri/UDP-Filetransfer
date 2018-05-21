@@ -3,10 +3,8 @@
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include <netdb.h>
-#include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
-#include <string.h>
 #include <cstring>
 #include <memory>
 #include <iostream>
@@ -40,6 +38,7 @@ protected:
   struct sockaddr_in socketAddrFrom;
 public:
   void sendDatagram(Datagram dg);
+  void recDatagram();
   char sendbuffer[DGRAMSIZE];
   char recvbuffer[DGRAMSIZE];
   struct sockaddr_in* getAddrFrom();
@@ -63,7 +62,8 @@ public:
   ~UDPServer();
 
   int connect();
-  void bind();
+  void ibind();
+  void ibindAddr(struct sockaddr_in boundAddr);
 
   void send(char* buffer, size_t length);
   void recieve(char* buffer, size_t length);
