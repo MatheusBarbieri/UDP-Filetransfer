@@ -9,26 +9,21 @@
 
 #include "udp.hpp"
 
-#define PORT 4000
-
 int main(int argc, char *argv[])
 {
-    int sockfd, n;
+    if (argc < 3) {
+        std::cout << "Usage:\n./udpClient <username> <host> <port>" << std::endl
+        return 0;
+    }
+
+    std::string username = argv[1], host = argv[2];
+    int port = atoi(argv[3]);
+    int n;
+    int port;
     socklen_t clilen;
-    struct sockaddr_in serv_addr;
-    struct sockaddr_in cli_addr;
     char buf[256];
 
-    if ((sockfd = socket(AF_INET, SOCK_DGRAM, 0)) == -1)
-        printf("ERROR opening socket");
-
-    serv_addr.sin_family = AF_INET;
-    serv_addr.sin_port = htons(PORT);
-    serv_addr.sin_addr.s_addr = INADDR_ANY;
-    bzero(&(serv_addr.sin_zero), 8);
-
-    if (bind(sockfd, (struct sockaddr *) &serv_addr, sizeof(struct sockaddr)) < 0)
-        printf("ERROR on binding");
+    UDPServer* server = new UDPServer(port);
 
     clilen = sizeof(struct sockaddr_in);
 
@@ -36,14 +31,14 @@ int main(int argc, char *argv[])
         /* receive from socket */
         n = recvfrom(sockfd, buf, 256, 0, (struct sockaddr *) &cli_addr, &clilen);
         if (n < 0)
-            printf("ERROR on recvfrom");
+        printf("ERROR on recvfrom");
         std::cout << "waht" << std::endl;
         printf("Received a datagram: %s\n", buf);
 
         /* send to socket */
         n = sendto(sockfd, "Got your message\n", 17, 0,(struct sockaddr *) &cli_addr, sizeof(struct sockaddr));
         if (n  < 0)
-            printf("ERROR on sendto");
+        printf("ERROR on sendto");
     }
 
     close(sockfd);

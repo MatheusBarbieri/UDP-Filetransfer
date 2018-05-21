@@ -6,41 +6,39 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
-#include <string.h>
+#include <cstring>
 
 #include "udp.hpp"
 
 #define PORT 4000
 
-int main(int argc, char *argv[])
-{
-  int n;
-	unsigned int length;
-  struct sockaddr_in from;
+int main(int argc, char **argv){
+    if (argc < 3) {
+        std::cout << "Usage:\n./udpClient <username> <host> <port>" << std::endl
+        return 0;
+    }
 
-	char buffer[256];
-	if (argc < 2) {
-		fprintf(stderr, "usage %s hostname\n", argv[0]);
-		exit(0);
-	}
+    std::string username = argv[1], host = argv[2];
+    int port = atoi(argv[3]);
+    char buffer[256];
 
-  UDPSocket* socket = new UDPSocket(PORT, argv[1]);
+    UDPClient* client = new UDPClient(port, host);
 
-	printf("Enter the message: ");
-	bzero(buffer, 256);
-	fgets(buffer, 256, stdin);
+    printf("Enter the message:");
+    bzero(buffer, 256);
+    fgets(buffer, 256, stdin);
 
-	n = sendto(socket->getSocketDesc(), buffer, strlen(buffer), 0, (const struct sockaddr *) socket->getAddr(), sizeof(struct sockaddr_in));
-	if (n < 0)
-		printf("ERROR sendto");
+    int n = sendto(client->getSocketDesc(), buffer, strlen(buffer), 0, (const struct sockaddr *) client->getAddr(), sizeof(struct sockaddr_in));
+    if (n < 0)
+    printf("ERROR sendto");
 
-	length = sizeof(struct sockaddr_in);
-	n = recvfrom(socket->getSocketDesc(), buffer, 256, 0, (struct sockaddr *) socket->getAddrFrom(), &length);
-	if (n < 0)
-		printf("ERROR recvfrom");
+    socklen_t length = sizeof(struct sockaddr_in);
+    n = recfrom(client->getSocketDesc(), buffer, 256, 0, (struct sockaddr *) client->getAddrFrom(), &length);
+    if (n < 0)
+    printf("ERROR recvfrom");
 
-	printf("Got an ack: %s\n", buffer);
+    printf("Got an ack: %s\n", buffer);
 
-	close(socket->getSocketDesc());
-	return 0;
+    close(client->getSocketDesc());
+    return 0;
 }
