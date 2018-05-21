@@ -11,36 +11,33 @@
 
 int main(int argc, char *argv[])
 {
-    if (argc < 3) {
-        std::cout << "Usage:\n./udpClient <username> <host> <port>" << std::endl
+    if (argc < 1) {
+        std::cout << "Usage:\n./udpServer <port>" << std::endl;
         return 0;
     }
 
-    std::string username = argv[1], host = argv[2];
-    int port = atoi(argv[3]);
+    int port = atoi(argv[1]);
     int n;
-    int port;
     socklen_t clilen;
-    char buf[256];
+    char buffer[256];
 
     UDPServer* server = new UDPServer(port);
+    server->_bind();
 
     clilen = sizeof(struct sockaddr_in);
-
     while (true) {
         /* receive from socket */
-        n = recvfrom(sockfd, buf, 256, 0, (struct sockaddr *) &cli_addr, &clilen);
+        n = recvfrom(server->getSocketDesc(), buffer, 256, 0, (struct sockaddr *) server->getAddrFrom(), &clilen);
         if (n < 0)
-        printf("ERROR on recvfrom");
-        std::cout << "waht" << std::endl;
-        printf("Received a datagram: %s\n", buf);
+            printf("ERROR on recvfrom");
+        printf("Received a datagram: %s\n", buffer);
 
         /* send to socket */
-        n = sendto(sockfd, "Got your message\n", 17, 0,(struct sockaddr *) &cli_addr, sizeof(struct sockaddr));
+        n = sendto(server->getSocketDesc(), "Got your message\n", 17, 0,(struct sockaddr *) server->getAddrFrom(), sizeof(struct sockaddr));
         if (n  < 0)
-        printf("ERROR on sendto");
+            printf("ERROR on sendto");
     }
 
-    close(sockfd);
+    close(server->getSocketDesc());
     return 0;
 }
