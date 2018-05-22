@@ -10,14 +10,17 @@
 #include <string>
 #include <memory>
 #include <iostream>
+#include <fstream>
 
 #define DGRAMSIZE 512
-#define DATASIZE DGRAMSIZE-3*sizeof(int)
+#define DATASIZE (DGRAMSIZE-3*sizeof(int))
 
 #define CONNECT 1
 #define ACK 2
 #define MESSAGE 3
-#define DATAFILE 4
+#define DATAGRAM 4
+#define DATAFILE 5
+#define ENDFILE 6
 
 // Datagram:
 //     types:  1 - CONNECT
@@ -58,9 +61,9 @@ public:
     Datagram* getRecvbuffer();
     int sendString(std::string str);
     int sendMessage(char* buffer, int length);
-    int sendFile(FILE* file, int length);
+    int sendFile(FILE* file);
     char* receiveMessage();
-    void receiveFile(FILE* file);
+    int receiveFile(FILE* file);
 
     struct sockaddr_in* getAddrFrom();
     bool isConnected();
@@ -75,7 +78,7 @@ public:
 
 class UDPServer: public UDPConnection {
 public:
-    UDPServer(int    port);
+    UDPServer(int port);
     ~UDPServer();
     int connect();
     void _bind();

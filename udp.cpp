@@ -187,8 +187,7 @@ int UDPConnection::sendString(std::string str){
 }
 
 int UDPConnection::sendMessage(char* message, int length){
-    int dataSize = DATASIZE;
-    int numDatagrams = (length/dataSize)+1;
+    int numDatagrams = (length/DATASIZE)+1;
     Datagram messageDatagram;
     zerosDatagram(&messageDatagram);
     messageDatagram.type = MESSAGE;
@@ -200,9 +199,10 @@ int UDPConnection::sendMessage(char* message, int length){
         int seqNumber;
         for(seqNumber=0; seqNumber<numDatagrams; seqNumber++){
             zerosDatagram(&messageDatagram);
-            messageDatagram.type = DATAFILE;
+            messageDatagram.type = DATAGRAM;
             messageDatagram.seqNumber = seqNumber;
             messageDatagram.size = numDatagrams;
+
             memcpy((void *) &messageDatagram.data,
                    (void *) (message + DATASIZE*seqNumber),
                    DATASIZE
@@ -217,19 +217,17 @@ char* UDPConnection::receiveMessage(){
     recDatagram();
     Datagram* received = getRecvbuffer();
     if (received->type != MESSAGE){
-        std::cout << "[Error] Waiting for message" << std::endl;
+        std::cout << "[Error] Expected a message, got a non-message." << std::endl;
         return NULL;
     }
 
     int numDatagrams = received->size;
-
     int receivedMessageSize = numDatagrams*DATASIZE+1;
     char* receivedMessage = (char*) calloc(receivedMessageSize, sizeof(char));
 
     int seqNumber;
     for(seqNumber=0; seqNumber<numDatagrams; seqNumber++){
         recDatagram();
-        std::cout << received->data << std::endl;
         memcpy((void *) (receivedMessage + DATASIZE*seqNumber),
                (void *) &received->data,
                DATASIZE
@@ -238,11 +236,63 @@ char* UDPConnection::receiveMessage(){
     return receivedMessage;
 }
 
-int UDPConnection::sendFile(FILE* file, int length){
-    return 0;
+int UDPConnection::sendFile(FILE* file){
+    Datagram fileDatagram;
+    zerosDatagram(&fileDatagram);
+    fileDatagram.type = DATAFILE;
+    fileDatagram.seqNumber = -5;
+    fileDatagram.size = 0;
+    int status = sendDatagram(fileDatagram);
+    if(status < 0){
+        return -1;
+        std::cout << "[Error] Could not send sendFile request." << std::endl;
+    }
+
+    char buffer[DATASIZE] = {0};
+    int seqNumber = 0;
+    int reading = 0;
+    do {
+        reading = fread(buffer, DATASIZE-1, 1, file);
+        zerosDatagram(&fileDatagram);
+        fileDatagram.type = DATAGRAM;
+        fileDatagram.seqNumber = seqNumber++;
+        fileDatagram.size = 0;
+
+        memcpy((void *) &fileDatagram.data,
+               (void *) &buffer,
+               strlen(buffer)
+        );
+
+        sendDatagram(fileDatagram);
+        memset(&buffer, 0, strlen(buffer));
+    } while (reading == 1);
+
+    if (feof(file)){
+        fileDatagram.type = ENDFILE;
+        sendDatagram(fileDatagram);
+    }
+    // std::cout << "HERE1" << std::endl;
+    // std::cout << "HERE2" << std::endl;
+    return status;
 }
 
-void UDPConnection::receiveFile(FILE* file){
+int UDPConnection::receiveFile(FILE* file){
+    int receivedFile = recDatagram();
+    Datagram* received = getRecvbuffer();
+    if (received->type != DATAFILE){
+        std::cout << "[Error] Expected a file, got a non-file." << std::endl;
+        return -1;
+    }
+
+    int seqNumber = 0;
+    while(received->type != ENDFILE){
+        recDatagram();
+        if(seqNumber == received->seqNumber){
+            fwrite(received->data, strlen(received->data), 1, file);
+            seqNumber++;
+        }
+    }
+    return receivedFile;
 }
 
 void UDPServer::_bind(){

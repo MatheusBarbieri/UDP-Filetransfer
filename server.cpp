@@ -22,9 +22,11 @@ int main(int argc, char *argv[]){
     server->_bind();
 
     server->connect();
-    char* message = server->receiveMessage();
-    puts(message);
+    // char* message = server->receiveMessage();
 
+    FILE * file = fopen("oizao.txt", "w+");
+    server->receiveFile(file);
+    fclose(file);
     // server->recDatagram();
     // Datagram* recebido = (Datagram*) &server->recvbuffer;
     // std::cout << "Tipo: " << recebido->type << std::endl;
