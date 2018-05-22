@@ -1,3 +1,4 @@
+#pragma once
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
@@ -6,22 +7,23 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <cstring>
+#include <string>
 #include <memory>
 #include <iostream>
-#include <string>
 
 #define DGRAMSIZE 512
+#define DATASIZE DGRAMSIZE-2*sizeof(int)
 
-typedef struct defaultDatagram {
+#define CONNECT 1
+#define ACK 2
+
+typedef struct datagram {
     int type;
-    int sequence;
-    char data[DGRAMSIZE - 2*sizeof(int)];
+    int seqNumber;
+    char data[DATASIZE];
 } Datagram;
 
-typedef struct startDatagram {
-    int type;
-    std::string userName;
-} StartDatagram;
+void zerosDatagram (Datagram* dg);
 
 class UDPSocket {
 protected:
@@ -36,35 +38,41 @@ class UDPConnection: public UDPSocket {
 protected:
     bool connected;
     struct sockaddr_in socketAddrFrom;
+    std::string username;
+
 public:
-    void sendDatagram(Datagram dg);
-    void recDatagram();
+    int sendDatagram(Datagram dg);
+    int recDatagram();
     char sendbuffer[DGRAMSIZE];
     char recvbuffer[DGRAMSIZE];
+    Datagram* getRecvbuffer();
+
     struct sockaddr_in* getAddrFrom();
     bool isConnected();
 };
 
 class UDPClient: public UDPConnection {
 public:
-    UDPClient(int port, std::string ip);
+    UDPClient(std::string username, int port, std::string ip);
     ~UDPClient();
 
     int connect();
 
     void send(char* buffer, size_t length);
+    void sendFile(FILE* file, size_t length);
     void recieve(char* buffer, size_t length);
 };
 
 class UDPServer: public UDPConnection {
 public:
-    UDPServer(int port);
+    UDPServer(int    port);
     ~UDPServer();
 
     int connect();
+
     void _bind();
-    void bindAddr(struct sockaddr_in boundAddr);
 
     void send(char* buffer, size_t length);
+    void sendFile(char* buffer, size_t length);
     void recieve(char* buffer, size_t length);
 };

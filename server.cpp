@@ -6,37 +6,28 @@
 #include <string.h>
 #include <netdb.h>
 #include <stdio.h>
+#include <cstring>
 
 #include "udp.hpp"
 
-int main(int argc, char *argv[])
-{
+int main(int argc, char *argv[]){
     if (argc < 1) {
-        std::cout << "Usage:\n./udpServer <port>" << std::endl;
+        std::cout << "Usage:\n\t./udpServer <port>" << std::endl;
         return 0;
     }
 
     int port = atoi(argv[1]);
-    int n;
-    socklen_t clilen;
-    char buffer[256];
 
     UDPServer* server = new UDPServer(port);
     server->_bind();
+    
+    server->connect();
 
-    clilen = sizeof(struct sockaddr_in);
-    while (true) {
-        /* receive from socket */
-        n = recvfrom(server->getSocketDesc(), buffer, 256, 0, (struct sockaddr *) server->getAddrFrom(), &clilen);
-        if (n < 0)
-            printf("ERROR on recvfrom");
-        printf("Received a datagram: %s\n", buffer);
-
-        /* send to socket */
-        n = sendto(server->getSocketDesc(), "Got your message\n", 17, 0,(struct sockaddr *) server->getAddrFrom(), sizeof(struct sockaddr));
-        if (n  < 0)
-            printf("ERROR on sendto");
-    }
+    server->recDatagram();
+    Datagram* recebido = (Datagram*) &server->recvbuffer;
+    std::cout << "Tipo: " << recebido->type << std::endl;
+    std::cout << "Numero de sequencia: " << recebido->seqNumber << std::endl;
+    std::cout << "Dado: " << recebido->data << std::endl;
 
     close(server->getSocketDesc());
     return 0;

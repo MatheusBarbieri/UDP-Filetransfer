@@ -35,4 +35,3 @@ runs:
 
 udp:
 		$(CC) $(CFLAGS) -c udp.cpp -o udp.o
-		rm -f udp.o
