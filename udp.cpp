@@ -157,7 +157,7 @@ int UDPConnection::recDatagram(){
     );
 
     if (status < 0){
-        std::cout << "[Erro] Could not receive Datagram." << std::endl;
+        std::cout << "[Error] Could not receive Datagram." << std::endl;
     } else {
         Datagram* received = (Datagram*) &recvbuffer;
         Datagram ack;
@@ -178,6 +178,73 @@ int UDPConnection::recDatagram(){
     return status;
 }
 
+int UDPConnection::sendString(std::string str){
+    char* message = const_cast<char*>(str.c_str());
+    int len = str.size();
+
+    int status = sendMessage(message, len);
+    return status;
+}
+
+int UDPConnection::sendMessage(char* message, int length){
+    int dataSize = DATASIZE;
+    int numDatagrams = (length/dataSize)+1;
+    Datagram messageDatagram;
+    zerosDatagram(&messageDatagram);
+    messageDatagram.type = MESSAGE;
+    messageDatagram.seqNumber = -3;
+    messageDatagram.size = numDatagrams;
+
+    int status = sendDatagram(messageDatagram);
+    if(status > 0){
+        int seqNumber;
+        for(seqNumber=0; seqNumber<numDatagrams; seqNumber++){
+            zerosDatagram(&messageDatagram);
+            messageDatagram.type = DATAFILE;
+            messageDatagram.seqNumber = seqNumber;
+            messageDatagram.size = numDatagrams;
+            memcpy((void *) &messageDatagram.data,
+                   (void *) (message + DATASIZE*seqNumber),
+                   DATASIZE
+            );
+            sendDatagram(messageDatagram);
+        }
+    }
+    return status;
+}
+
+char* UDPConnection::receiveMessage(){
+    recDatagram();
+    Datagram* received = getRecvbuffer();
+    if (received->type != MESSAGE){
+        std::cout << "[Error] Waiting for message" << std::endl;
+        return NULL;
+    }
+
+    int numDatagrams = received->size;
+
+    int receivedMessageSize = numDatagrams*DATASIZE+1;
+    char* receivedMessage = (char*) calloc(receivedMessageSize, sizeof(char));
+
+    int seqNumber;
+    for(seqNumber=0; seqNumber<numDatagrams; seqNumber++){
+        recDatagram();
+        std::cout << received->data << std::endl;
+        memcpy((void *) (receivedMessage + DATASIZE*seqNumber),
+               (void *) &received->data,
+               DATASIZE
+        );
+    }
+    return receivedMessage;
+}
+
+int UDPConnection::sendFile(FILE* file, int length){
+    return 0;
+}
+
+void UDPConnection::receiveFile(FILE* file){
+}
+
 void UDPServer::_bind(){
     if (bind(socketDesc, (struct sockaddr *) &socketAddr, sizeof(struct sockaddr)) < 0){
         std::cout << "[Error] could not bind the given socket. Is this user already connected?" << std::endl;
@@ -188,7 +255,7 @@ void UDPServer::_bind(){
 int UDPClient::connect(){
     Datagram connectDatagram;
     zerosDatagram(&connectDatagram);
-    connectDatagram.type = 1;
+    connectDatagram.type = CONNECT;
     connectDatagram.seqNumber = -1;
     username.copy(connectDatagram.data, DATASIZE);
     int sent = sendDatagram(connectDatagram);

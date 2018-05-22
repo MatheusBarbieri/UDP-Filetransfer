@@ -20,14 +20,16 @@ int main(int argc, char *argv[]){
 
     UDPServer* server = new UDPServer(port);
     server->_bind();
-    
-    server->connect();
 
-    server->recDatagram();
-    Datagram* recebido = (Datagram*) &server->recvbuffer;
-    std::cout << "Tipo: " << recebido->type << std::endl;
-    std::cout << "Numero de sequencia: " << recebido->seqNumber << std::endl;
-    std::cout << "Dado: " << recebido->data << std::endl;
+    server->connect();
+    char* message = server->receiveMessage();
+    puts(message);
+
+    // server->recDatagram();
+    // Datagram* recebido = (Datagram*) &server->recvbuffer;
+    // std::cout << "Tipo: " << recebido->type << std::endl;
+    // std::cout << "Numero de sequencia: " << recebido->seqNumber << std::endl;
+    // std::cout << "Dado: " << recebido->data << std::endl;
 
     close(server->getSocketDesc());
     return 0;

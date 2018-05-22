@@ -12,14 +12,23 @@
 #include <iostream>
 
 #define DGRAMSIZE 512
-#define DATASIZE DGRAMSIZE-2*sizeof(int)
+#define DATASIZE DGRAMSIZE-3*sizeof(int)
 
 #define CONNECT 1
 #define ACK 2
+#define MESSAGE 3
+#define DATAFILE 4
+
+// Datagram:
+//     types:  1 - CONNECT
+//             2 - ACK
+//             3 - BIG DATA
+//             4 - SENDFILE
 
 typedef struct datagram {
     int type;
     int seqNumber;
+    int size;
     char data[DATASIZE];
 } Datagram;
 
@@ -45,7 +54,13 @@ public:
     int recDatagram();
     char sendbuffer[DGRAMSIZE];
     char recvbuffer[DGRAMSIZE];
+
     Datagram* getRecvbuffer();
+    int sendString(std::string str);
+    int sendMessage(char* buffer, int length);
+    int sendFile(FILE* file, int length);
+    char* receiveMessage();
+    void receiveFile(FILE* file);
 
     struct sockaddr_in* getAddrFrom();
     bool isConnected();
@@ -55,24 +70,13 @@ class UDPClient: public UDPConnection {
 public:
     UDPClient(std::string username, int port, std::string ip);
     ~UDPClient();
-
     int connect();
-
-    void send(char* buffer, size_t length);
-    void sendFile(FILE* file, size_t length);
-    void recieve(char* buffer, size_t length);
 };
 
 class UDPServer: public UDPConnection {
 public:
     UDPServer(int    port);
     ~UDPServer();
-
     int connect();
-
     void _bind();
-
-    void send(char* buffer, size_t length);
-    void sendFile(char* buffer, size_t length);
-    void recieve(char* buffer, size_t length);
 };
