@@ -20,7 +20,7 @@
 ///////////////////////////////////////////////////////////
 
 void zerosDatagram (Datagram* dg){
-    memset(dg, 0, DGRAMSIZE);
+    memset(dg, '\0', DGRAMSIZE);
 }
 
 ///////////////////////////////////////////////////////////
@@ -236,12 +236,21 @@ char* UDPConnection::receiveMessage(){
     return receivedMessage;
 }
 
+int getFileSize(FILE *file){
+    fseek(file, 0L, SEEK_END);
+    int fileSize = ftell(file);
+    rewind(file);
+    return fileSize;
+}
+
 int UDPConnection::sendFile(FILE* file){
+    int fileSize = getFileSize(file);
+    int lastDatagramSize = fileSize%DATASIZE;
     Datagram fileDatagram;
     zerosDatagram(&fileDatagram);
     fileDatagram.type = DATAFILE;
     fileDatagram.seqNumber = -5;
-    fileDatagram.size = 0;
+    fileDatagram.size = lastDatagramSize;
     int status = sendDatagram(fileDatagram);
     if(status < 0){
         return -1;
@@ -250,29 +259,34 @@ int UDPConnection::sendFile(FILE* file){
 
     char buffer[DATASIZE] = {0};
     int seqNumber = 0;
-    int reading = 0;
-    do {
-        reading = fread(buffer, DATASIZE-1, 1, file);
+
+    int reading = 1;
+    while (reading == 1) {
+        reading = fread(buffer, DATASIZE, 1, file);
         zerosDatagram(&fileDatagram);
-        fileDatagram.type = DATAGRAM;
-        fileDatagram.seqNumber = seqNumber++;
-        fileDatagram.size = 0;
-
-        memcpy((void *) &fileDatagram.data,
-               (void *) &buffer,
-               strlen(buffer)
-        );
+        if (reading == 1){
+            fileDatagram.type = DATAGRAM;
+            fileDatagram.seqNumber = seqNumber++;
+            fileDatagram.size = 0;
+            memcpy((void *) &fileDatagram.data,
+                   (void *) &buffer,
+                   DATASIZE
+            );
+        }
+        else{
+            fileDatagram.type = ENDFILE;
+            fileDatagram.seqNumber = seqNumber++;
+            fileDatagram.size = 0;
+            memcpy((void *) &fileDatagram.data,
+                   (void *) &buffer,
+                   lastDatagramSize
+            );
+        }
 
         sendDatagram(fileDatagram);
-        memset(&buffer, 0, strlen(buffer));
-    } while (reading == 1);
-
-    if (feof(file)){
-        fileDatagram.type = ENDFILE;
-        sendDatagram(fileDatagram);
+        memset(&buffer, 0, DATASIZE);
     }
-    // std::cout << "HERE1" << std::endl;
-    // std::cout << "HERE2" << std::endl;
+
     return status;
 }
 
@@ -284,11 +298,17 @@ int UDPConnection::receiveFile(FILE* file){
         return -1;
     }
 
+    int lastDatagramSize = received->size;
+    int size = DATASIZE;
+
     int seqNumber = 0;
     while(received->type != ENDFILE){
         recDatagram();
         if(seqNumber == received->seqNumber){
-            fwrite(received->data, strlen(received->data), 1, file);
+            if (received->type == ENDFILE){
+                size = lastDatagramSize;
+            }
+            fwrite(received->data, size, 1, file);
             seqNumber++;
         }
     }

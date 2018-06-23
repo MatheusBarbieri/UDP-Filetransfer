@@ -11,7 +11,7 @@
 #include "udp.hpp"
 
 int main(int argc, char *argv[]){
-    if (argc < 1) {
+    if (argc < 2) {
         std::cout << "Usage:\n\t./udpServer <port>" << std::endl;
         return 0;
     }
@@ -20,18 +20,11 @@ int main(int argc, char *argv[]){
 
     UDPServer* server = new UDPServer(port);
     server->_bind();
-
     server->connect();
-    // char* message = server->receiveMessage();
 
-    FILE * file = fopen("oizao.txt", "w+");
+    FILE * file = fopen("cat.jpeg", "w+");
     server->receiveFile(file);
     fclose(file);
-    // server->recDatagram();
-    // Datagram* recebido = (Datagram*) &server->recvbuffer;
-    // std::cout << "Tipo: " << recebido->type << std::endl;
-    // std::cout << "Numero de sequencia: " << recebido->seqNumber << std::endl;
-    // std::cout << "Dado: " << recebido->data << std::endl;
 
     close(server->getSocketDesc());
     return 0;

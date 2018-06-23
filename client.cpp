@@ -11,38 +11,20 @@
 #include "udp.hpp"
 
 int main(int argc, char **argv){
-    if (argc < 3) {
+    if (argc < 4) {
         std::cout << "Usage:\n\t./udpClient <username> <host> <port>" << std::endl;
         return 0;
     }
-
     std::string username = argv[1], host = argv[2];
     int port = atoi(argv[3]);
 
     UDPClient* client = new UDPClient(username, port, host);
-
-    std::string teste = "AaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaABbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbBCccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccC";
-
-    FILE * file = fopen("file.txt", "r");
+    FILE * file = fopen("doggo.jpeg", "r");
 
     client->connect();
-    // client->sendString(teste);
-    // std::cout << "Mandou a string!\n" << std::endl;
-    //
     client->sendFile(file);
     std::cout << "Mandou a file!\n" << std::endl;
 
-    //
-    // Datagram datinha;
-    // printf("Enter the message:\n");
-    // bzero(datinha.data, DATASIZE);
-	// fgets(datinha.data, DATASIZE, stdin);
-    // datinha.type = CONNECT;
-    // datinha.seqNumber = 3;
-    //
-    // client->sendDatagram(datinha);
-    //
-    // std::cout << "Mandou um datagraminha!\n" << std::endl;
     fclose(file);
     close(client->getSocketDesc());
 
