@@ -17,14 +17,14 @@ int main(int argc, char *argv[]){
 
     int port = atoi(argv[1]);
 
-    UDPServer* server = new UDPServer(port);
-    server->_bind();
-    server->connect();
+    UDPServer server(port);
+    server._bind();
+    server.connect();
 
     FILE * file = fopen("cat.jpeg", "w+");
-    server->receiveFile(file);
+    server.receiveFile(file);
     fclose(file);
 
-    close(server->getSocketDesc());
+    close(server.getSocketDesc());
     return 0;
 }
