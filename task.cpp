@@ -3,6 +3,7 @@
 
 Task::Task(int type){
     this->type = type;
+    this->info = "";
 }
 
 Task::Task(int type, std::string info){

@@ -29,6 +29,7 @@ void zerosDatagram (Datagram* dg){
 ////////////////////// CONSTRUCTORS ///////////////////////
 ///////////////////////////////////////////////////////////
 
+UDPClient::UDPClient(){}
 
 UDPClient::UDPClient(std::string username, int port, std::string ip){
     int socketd = 0;

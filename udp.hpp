@@ -7,7 +7,6 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <cstring>
-#include <string>
 #include <memory>
 #include <iostream>
 #include <fstream>
@@ -66,6 +65,7 @@ public:
 
 class UDPClient: public UDPConnection {
 public:
+    UDPClient();
     UDPClient(std::string username, int port, std::string ip);
     ~UDPClient();
     int connect();

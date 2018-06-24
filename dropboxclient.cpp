@@ -15,19 +15,19 @@ int main(int argc, char **argv){
     std::string username = argv[1], host = argv[2];
     int port = atoi(argv[3]);
 
-    UDPClient* client = new UDPClient(username, port, host);
-    client->connect();
+    UDPClient udpclient(username, port, host);
+    Client client(username, udpclient);
 
-    std::string clientFolder = setUpClientFolder(username);
+    client.udpClient.connect();
 
     //ioLoop
 
     FILE * file = fopen("doggo.jpeg", "r");
-    client->sendFile(file);
+    client.udpClient.sendFile(file);
     std::cout << "Mandou a file!\n" << std::endl;
 
     fclose(file);
-    close(client->getSocketDesc());
+    close(client.udpClient.getSocketDesc());
 
     return 0;
 }

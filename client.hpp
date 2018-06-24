@@ -1,3 +1,4 @@
+#pragma once
 #include <thread>
 #include <mutex>
 #include <queue>
@@ -5,8 +6,9 @@
 #include "udp.hpp"
 #include "util.hpp"
 #include "filesystem.hpp"
+#include "task.hpp"
 
-class Task;
+class UDPClient;
 
 class Client {
 private:
@@ -15,21 +17,20 @@ private:
 
     std::mutex taskMutex;
     Semaphore taskAllocation;
-    std::queue<std::vector<Task> > taskQueue;
-    bool queueEmpty;
+    std::queue<Task> taskQueue;
 public:
     UDPClient udpClient;
 
-    Client (std::string username, int port, std::string host);
+    Client(std::string username, UDPClient &udpclient);
 
     std::string getUsername();
     std::string getClientFolder();
 
-    std::vector<Task> getCommandFromQueue();
-    void addCommandToQueue(std::vector<Task> task);
+    Task getTaskFromQueue();
+    void addTaskToQueue(Task task);
 
     void startThreads();
-    void inotify();
+    void inotifyLoop();
     void syncDirPoll();
     void commandLoop();
     void taskManager();

@@ -1,6 +1,7 @@
 #pragma once
 #include <cstring>
 #include <semaphore.h>
+#include <unistd.h>
 
 #include "udp.hpp"
 
