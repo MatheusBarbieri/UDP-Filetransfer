@@ -33,3 +33,8 @@
 
 # Textfiles
 *.txt
+
+# other files
+*.jpeg
+dropboxclient
+dropboxserver

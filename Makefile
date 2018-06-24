@@ -1,37 +1,40 @@
 CC = g++
-FLAGS = -g -Wall -lpthread -std=gnu++11
+FLAGS = -g -Wall -pthread -std=c++14
 CFLAGS = $(FLAGS) $(INCLUDE)
 
-UTILS = udp.o
+UTILS = udp.o \
+		util.o \
+		task.o \
+		filesystem.o \
 
-CLIENT_O = client.o
+CLIENT_O = dropboxclient.o
 
-SERVER_O = server.o
+SERVER_O = dropboxserver.o
 
 .PHONY: all clean
 
-all: udpServer udpClient removeObjects
+all: dropboxserver dropboxclient removeObjects
 
-udpServer: $(UTILS) $(SERVER_O)
+dropboxserver: $(UTILS) $(SERVER_O)
 	$(CC) $(CFLAGS) -o $@ $^
 
-udpClient: $(UTILS) $(CLIENT_O)
+dropboxclient: $(UTILS) $(CLIENT_O)
 	$(CC) $(CFLAGS) -o $@ $^
 
 %.o: %.cpp
 	$(CC) $(CFLAGS) -c -o $@ $<
 
 clean: removeObjects
-	rm -f udpClient udpServer
+	rm -f dropboxclient dropboxserver
 
 removeObjects:
 	rm -f $(UTILS) $(SERVER_O) $(CLIENT_O)
 
 runc:
-	./udpClient localhost
+	./dropboxclient Barbor localhost 8080
 
 runs:
-	./udpServer
+	./dropboxserver 8080
 
 udp:
 		$(CC) $(CFLAGS) -c udp.cpp -o udp.o
