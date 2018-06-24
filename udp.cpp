@@ -93,8 +93,6 @@ struct sockaddr_in* UDPConnection::getAddrFrom(){
     return &socketAddrFrom;
 }
 
-// n = recvfrom(sockfd, buf, 256, 0, (struct sockaddr *) &cli_addr, &clilen);
-
 int UDPConnection::sendDatagram(Datagram dg) {
     socklen_t socketSize = sizeof(socketAddr);
     int status = 0;
@@ -181,7 +179,6 @@ int UDPConnection::recDatagram(){
 int UDPConnection::sendString(std::string str){
     char* message = const_cast<char*>(str.c_str());
     int len = str.size();
-
     int status = sendMessage(message, len);
     return status;
 }
@@ -191,7 +188,7 @@ int UDPConnection::sendMessage(char* message, int length){
     Datagram messageDatagram;
     zerosDatagram(&messageDatagram);
     messageDatagram.type = MESSAGE;
-    messageDatagram.seqNumber = -3;
+    messageDatagram.seqNumber = 0;
     messageDatagram.size = numDatagrams;
 
     int status = sendDatagram(messageDatagram);
@@ -249,7 +246,7 @@ int UDPConnection::sendFile(FILE* file){
     Datagram fileDatagram;
     zerosDatagram(&fileDatagram);
     fileDatagram.type = DATAFILE;
-    fileDatagram.seqNumber = -5;
+    fileDatagram.seqNumber = 0;
     fileDatagram.size = lastDatagramSize;
     int status = sendDatagram(fileDatagram);
     if(status < 0){
@@ -317,7 +314,7 @@ int UDPConnection::receiveFile(FILE* file){
 
 void UDPServer::_bind(){
     if (bind(socketDesc, (struct sockaddr *) &socketAddr, sizeof(struct sockaddr)) < 0){
-        std::cout << "[Error] could not bind the given socket. Is this user already connected?" << std::endl;
+        std::cout << "[Error] could not bind the given socket. Is adress already bound?" << std::endl;
         exit(0);
     }
 }

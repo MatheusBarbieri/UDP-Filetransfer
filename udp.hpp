@@ -22,11 +22,6 @@
 #define DATAFILE 5
 #define ENDFILE 6
 
-// Datagram:
-//     types:  1 - CONNECT
-//             2 - ACK
-//             3 - BIG DATA
-//             4 - SENDFILE
 
 typedef struct datagram {
     int type;

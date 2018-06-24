@@ -1,14 +1,11 @@
-#include <sys/types.h>
-#include <sys/socket.h>
-#include <netinet/in.h>
-#include <arpa/inet.h>
-#include <netdb.h>
 #include <stdio.h>
+#include <iostream>
 #include <stdlib.h>
+#include <sys/stat.h>
 #include <unistd.h>
 #include <cstring>
 
-#include "udp.hpp"
+#include "client.hpp"
 
 int main(int argc, char **argv){
     if (argc < 4) {
@@ -19,9 +16,13 @@ int main(int argc, char **argv){
     int port = atoi(argv[3]);
 
     UDPClient* client = new UDPClient(username, port, host);
-    FILE * file = fopen("doggo.jpeg", "r");
-
     client->connect();
+
+    std::string clientFolder = setUpClientFolder(username);
+
+    //ioLoop
+
+    FILE * file = fopen("doggo.jpeg", "r");
     client->sendFile(file);
     std::cout << "Mandou a file!\n" << std::endl;
 
