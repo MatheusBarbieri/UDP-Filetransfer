@@ -1,10 +1,15 @@
-#include <thread>
 #include <mutex>
 #include <queue>
 #include <algorithm>
 #include <string>
+#include <regex>
+#include <thread>
+#include <sys/inotify.h>
 
 #include "client.hpp"
+
+#define IN_EVENT_SIZE (sizeof(struct inotify_event))
+#define IN_BUF_LEN (64 * (IN_EVENT_SIZE + 16))
 
 Client::Client(std::string username, UDPClient &udpclient){
     this->udpClient = udpclient;
@@ -29,6 +34,68 @@ std::string Client::getClientFolder(){
 }
 
 void Client::inotifyLoop(){
+    std::regex ignore_regex("(4913|.*\\.fstmp|.*\\.swpx{0,1}|.*~)$");
+    // start inotify
+    int fd = inotify_init();
+    if (fd < 0) {
+        return;
+    }
+    int wd = inotify_add_watch(fd, clientFolder.c_str(),
+    IN_CREATE | IN_DELETE | IN_CLOSE_WRITE | IN_MOVED_TO | IN_MOVED_FROM |
+    IN_DONT_FOLLOW | IN_EXCL_UNLINK);
+    if (wd < 0) {
+        return;
+    }
+    ssize_t len = 0;
+    char buffer[IN_BUF_LEN];
+
+    while (true) {
+        // read events
+        len = read(fd, buffer, IN_BUF_LEN);
+        if (len < 0) {
+            switch (errno) {
+                case EINTR:
+                // interrupted by signal
+                // exit
+                close(fd);
+                return;
+                break;
+                default:
+                std::cerr << "inotify problem" << std::endl;
+                break;
+            }
+        }
+        ssize_t i = 0;
+        // read inotify events
+        while (i < len) {
+            struct inotify_event *event;
+            event = (struct inotify_event *) &buffer[i];
+            std::string filename = event->name;
+            std::string filepath = clientFolder + "/" + filename;
+            if(std::regex_match(filename, ignore_regex)) {
+                // log("inotify: " + filename + " ignored");
+            } else {
+                switch (event->mask) {
+                    case IN_CREATE: // new file
+                    case IN_MOVED_TO: // moved into folder
+                    case IN_CLOSE_WRITE: { // modified
+                        addTaskToQueue(Task(UPLOAD, filepath));
+                    } break;
+                    case IN_DELETE: // deleted
+                    case IN_MOVED_FROM: { // moved from folder
+                        filesMutex.lock();
+                        auto it = files.find(filename);
+                        if (it != files.end()) {
+                            addTaskToQueue(Task(DELETE, filename));
+                        }
+                        filesMutex.unlock();
+                    } break;
+                }
+            }
+            i += IN_EVENT_SIZE + event->len;
+        }
+    }
+    close(fd);
 }
 
 void Client::syncDirPoll(){

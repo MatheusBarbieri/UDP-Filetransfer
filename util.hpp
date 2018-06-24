@@ -27,3 +27,10 @@ public:
   bool initialized;
   sem_t c_sem;
 };
+
+class Fileinfo {
+public:
+    std::string name;
+    time_t mod;
+    uint32_t size;
+};
