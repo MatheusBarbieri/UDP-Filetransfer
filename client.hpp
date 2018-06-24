@@ -2,6 +2,7 @@
 #include <thread>
 #include <mutex>
 #include <queue>
+#include <map>
 
 #include "udp.hpp"
 #include "util.hpp"
@@ -18,6 +19,8 @@ private:
     std::mutex taskMutex;
     Semaphore taskAllocation;
     std::queue<Task> taskQueue;
+    std::mutex filesMutex;
+    std::map<std::string, Fileinfo> files;
 public:
     UDPClient udpClient;
 
