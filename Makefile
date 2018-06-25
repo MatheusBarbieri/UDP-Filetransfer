@@ -6,7 +6,8 @@ UTILS = udp.o \
 		util.o \
 		client.o \
 		server.o \
-		serverManager.o \
+		userSession.o \
+		user.o \
 		task.o \
 		filesystem.o \
 

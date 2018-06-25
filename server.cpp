@@ -8,11 +8,21 @@
 
 #include "server.hpp"
 
-Server::Server(UDPServer &udpserver){
-    this->udpServer = udpserver;
+Server::Server(){
     this->serverFolder = setUpServerFolder();
 }
 
 std::string Server::getServerFolder(){
     return serverFolder;
+}
+
+bool Server::existUser(std::string username){
+    usersMutex.lock();
+    for (auto &user : users){
+        if (user.getUsername() == username){
+            return true;
+        }
+    }
+    usersMutex.unlock();
+    return false;
 }

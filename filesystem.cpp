@@ -1,6 +1,6 @@
 #include "filesystem.hpp"
 
-std::string getClientFolder(std::string username){
+std::string findClientFolder(std::string username){
     const char *homedir;
     if ((homedir = getenv("HOME")) == NULL) {
         homedir = getpwuid(getuid())->pw_dir;
@@ -10,19 +10,19 @@ std::string getClientFolder(std::string username){
 }
 
 std::string setUpClientFolder(std::string username){
-    std::string dir = getClientFolder(username);
+    std::string dir = findClientFolder(username);
     const char* folder = dir.c_str();
     struct stat sb;
     if (stat(folder, &sb) == 0 && S_ISDIR(sb.st_mode)){
         std::cout << "Client Folder found." << std::endl;
     } else {
         mkdir(folder, S_IRWXU | S_IRWXG | S_IRWXO);
-        std::cout << "No folder found for client.\nCreating Folder:\n\t" << dir << std::endl;
+        std::cout << "No folder.\nCreating Folder:\n\t" << dir << std::endl;
     }
     return dir;
 }
 
-std::string getServerFolder(){
+std::string findServerFolder(){
     const char *homedir;
     if ((homedir = getenv("HOME")) == NULL) {
         homedir = getpwuid(getuid())->pw_dir;
@@ -32,14 +32,14 @@ std::string getServerFolder(){
 }
 
 std::string setUpServerFolder(){
-    std::string dir = getServerFolder();
+    std::string dir = findServerFolder();
     const char* folder = dir.c_str();
     struct stat sb;
     if (stat(folder, &sb) == 0 && S_ISDIR(sb.st_mode)){
         std::cout << "Server Folder found." << std::endl;
     } else {
         mkdir(folder, S_IRWXU | S_IRWXG | S_IRWXO);
-        std::cout << "No folder found for client.\nCreating Folder:\n\t" << dir << std::endl;
+        std::cout << "No folder found.\nCreating Folder:\n\t" << dir << std::endl;
     }
     return dir;
 }
@@ -71,4 +71,26 @@ void printFiles(std::map<std::string, Fileinfo> &files) {
         Fileinfo info = (*it).second;
         std::cerr << " - " << info.name << '\n';
     }
+}
+
+std::string findUserFolder(std::string username){
+    const char *homedir;
+    if ((homedir = getenv("HOME")) == NULL) {
+        homedir = getpwuid(getuid())->pw_dir;
+    }
+    std::string dir = std::string(homedir) + "/dropboxServer/" + username;
+    return dir;
+}
+
+std::string setUpUserFolder(std::string username){
+    std::string dir = findUserFolder(username);
+    const char* folder = dir.c_str();
+    struct stat sb;
+    if (stat(folder, &sb) == 0 && S_ISDIR(sb.st_mode)){
+        std::cout << "User Folder found." << std::endl;
+    } else {
+        mkdir(folder, S_IRWXU | S_IRWXG | S_IRWXO);
+        std::cout << "No folder found for User.\nCreating Folder:\n\t" << dir << std::endl;
+    }
+    return dir + "/";
 }

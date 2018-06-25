@@ -10,11 +10,12 @@
 
 #include "util.hpp"
 
-std::string getClientFolder(std::string username);
+std::string findClientFolder(std::string username);
 std::string setUpClientFolder(std::string username);
-
-std::string getServerFolder();
+std::string findServerFolder();
 std::string setUpServerFolder();
+std::string findUserFolder(std::string username);
+std::string setUpUserFolder(std::string username);
 
 class Fileinfo {
 public:

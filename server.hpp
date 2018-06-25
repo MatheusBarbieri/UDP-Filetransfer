@@ -8,14 +8,18 @@
 #include "util.hpp"
 #include "filesystem.hpp"
 #include "task.hpp"
+#include "userSession.hpp"
 
 class Server {
 private:
     std::string serverFolder;
+    std::vector<User> users;
+    std::mutex usersMutex;
 public:
-    UDPServer udpServer;
+    Server();
 
-    Server(UDPServer &udpserver);
+    bool existUser(std::string username);
+    int addUser();
 
     std::string getServerFolder();
 };
