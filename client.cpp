@@ -8,9 +8,6 @@
 
 #include "client.hpp"
 
-#define IN_EVENT_SIZE (sizeof(struct inotify_event))
-#define IN_BUF_LEN (64 * (IN_EVENT_SIZE + 16))
-
 Client::Client(std::string username, UDPClient &udpclient){
     this->udpClient = udpclient;
     this->username = username;

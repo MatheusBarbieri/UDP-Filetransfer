@@ -51,12 +51,15 @@ public:
     int recDatagram();
     char sendbuffer[DGRAMSIZE];
     char recvbuffer[DGRAMSIZE];
+    long recvMessageSize;
 
     Datagram* getRecvbuffer();
     int sendString(std::string str);
+    std::string receiveString();
     int sendMessage(char* buffer, int length);
     int sendFile(FILE* file);
     char* receiveMessage();
+    long getRecvMessageSize();
     int receiveFile(FILE* file);
 
     struct sockaddr_in* getAddrFrom();
@@ -73,6 +76,7 @@ public:
 
 class UDPServer: public UDPConnection {
 public:
+    UDPServer();
     UDPServer(int port);
     ~UDPServer();
     int connect();

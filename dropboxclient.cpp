@@ -17,17 +17,17 @@ int main(int argc, char **argv){
 
     UDPClient udpclient(username, port, host);
     Client client(username, udpclient);
-
     client.udpClient.connect();
+    client.startThreads();
 
-    //ioLoop
-
-    FILE * file = fopen("doggo.jpeg", "r");
-    client.udpClient.sendFile(file);
-    std::cout << "Mandou a file!\n" << std::endl;
-
-    fclose(file);
     close(client.udpClient.getSocketDesc());
-
     return 0;
+
+    // FILE * file = fopen("doggo.jpeg", "r");
+    // client.udpClient.sendFile(file);
+    // std::cout << "Mandou a file!\n" << std::endl;
+    // fclose(file);
+    //
+    // close(client.udpClient.getSocketDesc());
+    // return 0;
 }

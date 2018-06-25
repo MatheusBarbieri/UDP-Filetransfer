@@ -5,6 +5,8 @@ CFLAGS = $(FLAGS) $(INCLUDE)
 UTILS = udp.o \
 		util.o \
 		client.o \
+		server.o \
+		serverManager.o \
 		task.o \
 		filesystem.o \
 

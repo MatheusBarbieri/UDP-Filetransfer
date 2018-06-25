@@ -7,7 +7,7 @@
 #include <stdio.h>
 #include <cstring>
 
-#include "udp.hpp"
+#include "server.hpp"
 
 int main(int argc, char *argv[]){
     if (argc < 2) {
@@ -17,14 +17,18 @@ int main(int argc, char *argv[]){
 
     int port = atoi(argv[1]);
 
-    UDPServer server(port);
-    server._bind();
-    server.connect();
+    // Server server(port);
+    //
+    // while(true){
+    //     UDPServer server(port);
+    //     server._bind();
+    //     server.connect();
+    // }
 
-    FILE * file = fopen("cat.jpeg", "w+");
-    server.receiveFile(file);
-    fclose(file);
+    // FILE * file = fopen("cat.jpeg", "w+");
+    // server.receiveFile(file);
+    // fclose(file);
 
-    close(server.getSocketDesc());
+    // close(server.getSocketDesc());
     return 0;
 }

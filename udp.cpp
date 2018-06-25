@@ -58,6 +58,8 @@ UDPClient::~UDPClient(void){
     close(this->socketDesc);
 }
 
+UDPServer::UDPServer(){}
+
 UDPServer::UDPServer(int port){
     int socketd = socket(AF_INET, SOCK_DGRAM, 0);
     if (socketd == -1){
@@ -184,13 +186,21 @@ int UDPConnection::sendString(std::string str){
     return status;
 }
 
+std::string UDPConnection::receiveString(){
+    char* c_message = NULL;
+    c_message = receiveMessage();
+    std::string message = std::string(c_message);
+    free(c_message);
+    return message;
+}
+
 int UDPConnection::sendMessage(char* message, int length){
     int numDatagrams = (length/DATASIZE)+1;
     Datagram messageDatagram;
     zerosDatagram(&messageDatagram);
     messageDatagram.type = MESSAGE;
     messageDatagram.seqNumber = 0;
-    messageDatagram.size = numDatagrams;
+    messageDatagram.size = length;
 
     int status = sendDatagram(messageDatagram);
     if(status > 0){
@@ -211,6 +221,10 @@ int UDPConnection::sendMessage(char* message, int length){
     return status;
 }
 
+long UDPConnection::getRecvMessageSize(){
+    return recvMessageSize;
+}
+
 char* UDPConnection::receiveMessage(){
     recDatagram();
     Datagram* received = getRecvbuffer();
@@ -218,9 +232,11 @@ char* UDPConnection::receiveMessage(){
         std::cout << "[Error] Expected a message, got a non-message." << std::endl;
         return NULL;
     }
-
-    int numDatagrams = received->size;
-    int receivedMessageSize = numDatagrams*DATASIZE+1;
+    int receivedMessageSize = received->size;
+    int numDatagrams = (receivedMessageSize/DATASIZE)+1;
+    if (receivedMessageSize%DATASIZE == 0){
+        numDatagrams--;
+    }
     char* receivedMessage = (char*) calloc(receivedMessageSize, sizeof(char));
 
     int seqNumber;
@@ -231,6 +247,7 @@ char* UDPConnection::receiveMessage(){
                DATASIZE
         );
     }
+    recvMessageSize = receivedMessageSize;
     return receivedMessage;
 }
 

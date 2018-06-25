@@ -21,3 +21,25 @@ std::string setUpClientFolder(std::string username){
     }
     return dir;
 }
+
+std::string getServerFolder(){
+    const char *homedir;
+    if ((homedir = getenv("HOME")) == NULL) {
+        homedir = getpwuid(getuid())->pw_dir;
+    }
+    std::string dir = std::string(homedir) + "/dropboxServer";
+    return dir;
+}
+
+std::string setUpServerFolder(){
+    std::string dir = getServerFolder();
+    const char* folder = dir.c_str();
+    struct stat sb;
+    if (stat(folder, &sb) == 0 && S_ISDIR(sb.st_mode)){
+        std::cout << "Server Folder found." << std::endl;
+    } else {
+        mkdir(folder, S_IRWXU | S_IRWXG | S_IRWXO);
+        std::cout << "No folder found for client.\nCreating Folder:\n\t" << dir << std::endl;
+    }
+    return dir;
+}
