@@ -43,3 +43,32 @@ std::string setUpServerFolder(){
     }
     return dir;
 }
+
+std::map<std::string, Fileinfo> readFolder(std::string path) {
+    std::map<std::string, Fileinfo> files;
+    DIR* dirp = opendir(path.c_str());
+    struct dirent *entry;
+    entry = readdir(dirp);
+    while (entry) {
+      std::string filename(entry->d_name);
+      std::string filepath = path + "/" + filename;
+      struct stat path_stat;
+      stat(filepath.c_str(), &path_stat);
+      if (S_ISREG(path_stat.st_mode)) {
+        Fileinfo info;
+        info.mod = path_stat.st_mtime;
+        info.size = path_stat.st_size;
+        info.name = entry->d_name;
+        files[filename] = info;
+      }
+      entry = readdir(dirp);
+    }
+    return files;
+}
+
+void printFiles(std::map<std::string, Fileinfo> &files) {
+    for (auto it = files.begin(); it != files.end(); it++) {
+        Fileinfo info = (*it).second;
+        std::cerr << " - " << info.name << '\n';
+    }
+}

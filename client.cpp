@@ -12,6 +12,7 @@ Client::Client(std::string username, UDPClient &udpclient){
     this->udpClient = udpclient;
     this->username = username;
     this->clientFolder = setUpClientFolder(username);
+    files = readFolder(clientFolder);
 }
 
 void Client::startThreads(){
