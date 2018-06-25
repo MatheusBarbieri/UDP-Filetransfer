@@ -113,30 +113,24 @@ void Client::commandLoop(){
         std::transform(command.begin(), command.end(), command.begin(), ::tolower);
         if(command == "upload"){
             std::cin >> filename;
-            Task task(DOWNLOAD, filename);
-            addTaskToQueue(task);
+            addTaskToQueue(Task(DOWNLOAD, filename));
         }
         else if(command == "download"){
             std::cin >> filename;
-            Task task(UPLOAD, filename);
-            addTaskToQueue(task);
+            addTaskToQueue(Task(UPLOAD, filename));
         }
         else if(command == "delete"){
             std::cin >> filename;
-            Task task(DELETE, filename);
-            addTaskToQueue(task);
+            addTaskToQueue(Task(DELETE, filename));
         }
         else if(command == "list_dir"){
-            Task task(CLIENT_LISTDIR, filename);
-            addTaskToQueue(task);
+            addTaskToQueue(Task(CLIENT_LISTDIR, filename));
         }
         else if(command == "list_server"){
-            Task task(SERVER_LISTDIR, filename);
-            addTaskToQueue(task);
+            addTaskToQueue(Task(SERVER_LISTDIR, filename));
         }
         else if(command == "exit"){
-            Task task(EXIT, filename);
-            addTaskToQueue(task);
+            addTaskToQueue(Task(EXIT, filename));
             std::cout << "Encerrando as operações..." << std::endl;
             break;
         }
