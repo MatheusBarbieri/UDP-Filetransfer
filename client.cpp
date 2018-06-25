@@ -15,6 +15,7 @@ Client::Client(std::string username, UDPClient &udpclient){
 }
 
 void Client::startThreads(){
+  running = true;
   std::thread inotifyLoop = std::thread(&Client::inotifyLoop, this);
   std::thread syncDirPoll = std::thread(&Client::syncDirPoll, this);
   std::thread commandLoop = std::thread(&Client::commandLoop, this);
@@ -46,7 +47,7 @@ void Client::inotifyLoop(){
     ssize_t len = 0;
     char buffer[IN_BUF_LEN];
 
-    while (true) {
+    while (running) {
         // read events
         len = read(fd, buffer, IN_BUF_LEN);
         if (len < 0) {
@@ -70,7 +71,7 @@ void Client::inotifyLoop(){
             std::string filename = event->name;
             std::string filepath = clientFolder + "/" + filename;
             if(std::regex_match(filename, ignore_regex)) {
-                // log("inotify: " + filename + " ignored");
+                // ignored
             } else {
                 switch (event->mask) {
                     case IN_CREATE: // new file

@@ -22,6 +22,7 @@ private:
     std::queue<Task> taskQueue;
     std::mutex filesMutex;
     std::map<std::string, Fileinfo> files;
+    bool running;
 public:
     UDPClient udpClient;
 
@@ -38,4 +39,9 @@ public:
     void syncDirPoll();
     void commandLoop();
     void taskManager();
+
+    void uploadFile(std::string filepath);
+    void downloadFile(std::string filepath);
+    void deleteFile(std::string filepath);
+    void exit();
 };
