@@ -18,6 +18,10 @@ int User::endUserSession(){
     return 0;
 }
 
+uint32_t User::getFolderVersion(){
+    return folderVersion;
+}
+
 std::string User::getUserFolder(){
     return userFolder;
 }

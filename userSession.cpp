@@ -35,7 +35,7 @@ void UserSession::runSession(){
                 case SERVERDIR: {
                     int numFiles = user->files.size();
 
-                    s_fileinfo *info = calloc(numFiles, sizeof(s_fileinfo));
+                    s_fileinfo *info = (s_fileinfo*)calloc(numFiles, sizeof(s_fileinfo));
                     int i = 0;
                     for (auto const ent : user->files) {
                         Fileinfo fileinfo = ent.second;

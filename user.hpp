@@ -16,9 +16,9 @@ private:
     std::string username;
     std::string userFolder;
     uint32_t folderVersion;
-    std::map<std::string, Fileinfo> files;
     std::vector<UserSession> userSessions;
 public:
+    std::map<std::string, Fileinfo> files;
     std::mutex actionMutex;
 
     User(std::string username);
