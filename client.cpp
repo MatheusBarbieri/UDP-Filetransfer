@@ -124,10 +124,10 @@ void Client::commandLoop(){
             addTaskToQueue(Task(DELETE, filename));
         }
         else if(command == "list_dir"){
-            addTaskToQueue(Task(CLIENT_LISTDIR, filename));
+            addTaskToQueue(Task(LOCALDIR, filename));
         }
         else if(command == "list_server"){
-            addTaskToQueue(Task(SERVER_LISTDIR, filename));
+            addTaskToQueue(Task(SERVERDIR, filename));
         }
         else if(command == "exit"){
             addTaskToQueue(Task(EXIT, filename));
@@ -137,8 +137,32 @@ void Client::commandLoop(){
     }
 }
 
-void Client::taskManager(){
+void Client::taskManager() {
+    while(true){
+        Task task = getTaskFromQueue();
+        switch (task.getType()) {
+            case DOWNLOAD:
 
+                break;
+            case UPLOAD:
+
+                break;
+
+            case DELETE:
+
+                break;
+            case LOCALDIR:
+
+                break;
+            case SERVERDIR:
+
+                break;
+            case EXIT:
+
+                break;
+
+        }
+    }
 }
 
 Task Client::getTaskFromQueue() {

@@ -18,7 +18,6 @@ private:
     std::vector<UserSession> userSessions;
 public:
     std::mutex actionMutex;
-    std::map<std::string, Fileinfo> files;
 
     User(std::string username);
 

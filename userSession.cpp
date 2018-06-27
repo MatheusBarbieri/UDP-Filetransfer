@@ -33,10 +33,10 @@ void UserSession::runSession(){
                 case DELETE:
 
                     break;
-                case SYNCDIR:
+                case SERVERDIR:
 
                     break;
-                case SERVER_LISTDIR:
+                case FOLDER_VERSION:
 
                     break;
                 case EXIT:

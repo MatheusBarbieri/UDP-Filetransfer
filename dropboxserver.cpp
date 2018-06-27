@@ -17,7 +17,7 @@ int main(int argc, char *argv[]){
 
     int port = atoi(argv[1]);
 
-    // Server server(port);
+    Server server(port);
     //
     // while(true){
     //     UDPServer server(port);

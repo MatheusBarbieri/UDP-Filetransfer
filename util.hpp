@@ -8,9 +8,9 @@
 #define UPLOAD 7
 #define DOWNLOAD 8
 #define DELETE 9
-#define CLIENT_LISTDIR 10
-#define SERVER_LISTDIR 11
-#define SYNCDIR 12
+#define LOCALDIR 10
+#define FOLDER_VERSION 11
+#define SERVERDIR 12
 #define EXIT 13
 
 Datagram createMessage(int type, std::string value);

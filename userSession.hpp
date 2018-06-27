@@ -18,4 +18,10 @@ public:
     UDPServer udpServer;
     UserSession(UDPServer &udpserver, User* user);
     void runSession();
+    uploadFile();
+    downloadFile();
+    deleteFile();
+    listDir();
+    dirVersion();
+    exit();
 };
