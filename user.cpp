@@ -3,6 +3,7 @@
 User::User(std::string username){
     this->username = username;
     this->userFolder = setUpUserFolder(username);
+    this->files = readFolder(this->userFolder);
 }
 
 bool User::canConnect(){
