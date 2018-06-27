@@ -18,6 +18,14 @@ int main(int argc, char **argv){
     UDPClient udpclient(username, port, host);
     Client client(username, udpclient);
     client.udpClient.connect();
+
+    Datagram dg;
+    std::cout << "here\n";
+    int test = client.udpClient.sendDatagramMaxTries(dg, 5);
+
+    std::cout << "test: " << test << std::endl;
+
+
     client.startThreads();
 
     close(client.udpClient.getSocketDesc());

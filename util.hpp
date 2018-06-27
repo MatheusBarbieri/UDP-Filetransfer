@@ -12,7 +12,6 @@
 #define FOLDER_VERSION 11
 #define SERVERDIR 12
 #define EXIT 13
-#define TIMEOUT 404
 
 Datagram createMessage(int type, std::string value);
 

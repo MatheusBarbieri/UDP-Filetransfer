@@ -136,12 +136,98 @@ int UDPConnection::sendDatagram(Datagram &dg) {
     return status;
 }
 
+int UDPConnection::sendDatagramMaxTries(Datagram &dg, int maxTries) {
+    socklen_t socketSize = sizeof(socketAddr);
+    int status = 0, tries = 0;
+
+    Datagram ack;
+    zerosDatagram(&ack);
+
+    //0.3 seconds timeout on socket recv
+    struct timeval read_timeout;
+    read_timeout.tv_sec = 0;
+    read_timeout.tv_usec = 300000;
+    setsockopt(this->getSocketDesc(), SOL_SOCKET, SO_RCVTIMEO, &read_timeout, sizeof read_timeout);
+
+    while(true){
+        status = sendto(getSocketDesc(),
+                        (char*) &dg,
+                        DGRAMSIZE,
+                        0,
+                        (struct sockaddr *) &socketAddr,
+                        socketSize
+        );
+        if (status >= 0){
+            socklen_t socketSize = sizeof(socketAddrFrom);
+            recvfrom(getSocketDesc(),
+                     (void*) &ack,
+                     DGRAMSIZE,
+                     0,
+                     (struct sockaddr *) &socketAddrFrom,
+                     &socketSize
+            );
+            if (ack.type == ACK && ack.seqNumber == dg.seqNumber){
+                break;
+            }
+            tries++;
+            if (tries > maxTries){
+                return TIMEOUT;
+            }
+        } else {
+            std::cout << "[Error] Sending datagram." << std::endl;
+        }
+    }
+    return status;
+}
+
 int UDPConnection::recDatagram(){
 
     socklen_t socketSize = sizeof(socketAddr);
     struct timeval read_timeout;
     read_timeout.tv_sec = 0;
     read_timeout.tv_usec = 0;
+
+    setsockopt(socketDesc,
+               SOL_SOCKET, SO_RCVTIMEO,
+               &read_timeout,
+               sizeof(read_timeout)
+    );
+
+    int status = recvfrom(getSocketDesc(),
+                          &recvbuffer,
+                          DGRAMSIZE,
+                          0,
+                          (struct sockaddr *) &socketAddrFrom,
+                          &socketSize
+    );
+
+    if (status < 0){
+        std::cout << "[Error] Could not receive Datagram." << std::endl;
+    } else {
+        Datagram* received = (Datagram*) &recvbuffer;
+        Datagram ack;
+        zerosDatagram(&ack);
+
+        ack.type = ACK;
+        ack.seqNumber = received->seqNumber;
+
+        socklen_t socketFromSize = sizeof(socketAddrFrom);
+        sendto(socketDesc,
+               (void*) &ack,
+               DGRAMSIZE,
+               0,
+               (struct sockaddr *) &socketAddrFrom,
+               socketFromSize
+        );
+    }
+    return status;
+}
+
+int UDPConnection::recDatagramTimeOut(int timeOut){
+    socklen_t socketSize = sizeof(socketAddr);
+    struct timeval read_timeout;
+    read_timeout.tv_usec = 0;
+    read_timeout.tv_sec = timeOut;
 
     setsockopt(socketDesc,
                SOL_SOCKET, SO_RCVTIMEO,
@@ -352,6 +438,10 @@ int UDPServer::connect(){
     username = getRecvbuffer()->data;
     std::cout << "Usuário " << username << " logado!" << std::endl;
     return received;
+}
+
+std::string UDPConnection::getUsername(){
+    return username;
 }
 
 Datagram* UDPConnection::getRecvbuffer(){

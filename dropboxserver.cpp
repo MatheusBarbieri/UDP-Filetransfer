@@ -8,6 +8,7 @@
 #include <cstring>
 
 #include "server.hpp"
+#include "udp.hpp"
 
 int main(int argc, char *argv[]){
     if (argc < 2) {
@@ -17,18 +18,31 @@ int main(int argc, char *argv[]){
 
     int port = atoi(argv[1]);
 
-    //Server server(port);
-    //
-    // while(true){
-    //     UDPServer server(port);
-    //     server._bind();
-    //     server.connect();
-    // }
+    Server server;
+
+    while(true){
+        UDPServer udpserver(port);
+        udpserver._bind();
+        udpserver.connect(); //wait for new user
+        User *user;
+        auto it = server.getUsers().find(udpserver.getUsername());
+        if (it != server.getUsers().end()){
+            user = &it->second;
+            if(user->canConnect()){
+                UserSession session(udpserver, user);
+            }
+        } else {
+            User newUser(udpserver.getUsername());
+            UserSession session(udpserver, user);
+        }
+
+
+
+    }
 
     // FILE * file = fopen("cat.jpeg", "w+");
     // server.receiveFile(file);
     // fclose(file);
 
-    // close(server.getSocketDesc());
     return 0;
 }

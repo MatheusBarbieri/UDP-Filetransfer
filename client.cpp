@@ -74,7 +74,6 @@ void Client::inotifyLoop(){
                 // ignored
             } else {
                 switch (event->mask) {
-                    case IN_CREATE: // new file
                     case IN_MOVED_TO: // moved into folder
                     case IN_CLOSE_WRITE: { // modified
                         addTaskToQueue(Task(UPLOAD, filepath));
@@ -104,11 +103,11 @@ void Client::commandLoop(){
         std::transform(command.begin(), command.end(), command.begin(), ::tolower);
         if(command == "upload"){
             std::cin >> filename;
-            addTaskToQueue(Task(DOWNLOAD, filename));
+            addTaskToQueue(Task(UPLOAD, filename));
         }
         else if(command == "download"){
             std::cin >> filename;
-            addTaskToQueue(Task(UPLOAD, filename));
+            addTaskToQueue(Task(DOWNLOAD, filename));
         }
         else if(command == "delete"){
             std::cin >> filename;
@@ -128,23 +127,51 @@ void Client::commandLoop(){
     }
 }
 
-void Client::taskManager() {
+uint32_t Client::getFolderVersion(){
+    Datagram message, *recData;
+    message.type = FOLDER_VERSION;
+    recData = udpClient.getRecvbuffer();
+    int status = udpClient.sendDatagram(message);
+    if (status == 0){
+        int i = 0;
+        while(i < 10){
+            status = udpClient.recDatagram();
+            i++;
+            if (status == 0) break;
+        }
+    }
+    if (status == 0 and recData->type == FOLDER_VERSION){
+        return recData->seqNumber;
+    }
+    return -1;
+}
+
+bool Client::exitTaskManager(){
+    Datagram message, *recData;
+    recData = udpClient.getRecvbuffer();
+    int status = 1;
+    message.type = EXIT;
+    udpClient.sendDatagram(message);
+    status = udpClient.recDatagram();
+    if (status == 0 and recData->type == EXIT){
+        return false;
+    }
+    return true;
+}
+
+void Client::taskManager(){
     bool running = true;
     while(running){
-        Datagram message, *recData;
-        recData = (Datagram*) &udpClient.recvbuffer;
-        int status;
         Task task = getTaskFromQueue();
         switch (task.getType()) {
             case DOWNLOAD:
-
+                std::cout << "Fez download: " << task.getInfo() << std::endl;
                 break;
             case UPLOAD:
-
+                std::cout << "Fez upload: " << task.getInfo() << std::endl;
                 break;
-
             case DELETE:
-
+                std::cout << "Deletou: " << task.getInfo() << std::endl;
                 break;
             case LOCALDIR:
 
@@ -153,14 +180,7 @@ void Client::taskManager() {
 
                 break;
             case EXIT:
-                message.type = EXIT;
-                status = udpClient.sendDatagram(message);
-                if (status == 0){
-                    status = udpClient.recDatagram();
-                }
-                if (status == 0 and recData->type == EXIT){
-                    running = false;
-                }
+                running = exitTaskManager();
                 break;
         }
     }

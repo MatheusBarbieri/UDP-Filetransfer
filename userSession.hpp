@@ -16,7 +16,7 @@ private:
     User* user;
 public:
     UDPServer udpServer;
-    UserSession(UDPServer &udpserver, User* user);
+    UserSession(UDPServer udpserver, User* user);
     void runSession();
 
     uint32_t uploadFile(std::string filename);

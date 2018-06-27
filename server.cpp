@@ -12,6 +12,10 @@ Server::Server(){
     this->serverFolder = setUpServerFolder();
 }
 
+std::map<std::string, User>& Server::getUsers(){
+    return users;
+}
+
 std::string Server::getServerFolder(){
     return serverFolder;
 }

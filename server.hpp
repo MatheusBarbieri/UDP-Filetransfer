@@ -18,9 +18,9 @@ private:
 
 public:
     Server();
-
     bool existUser(std::string username);
-    int addUser();
+    int createUser();
+    std::map<std::string, User>& getUsers();
 
     std::string getServerFolder();
 };

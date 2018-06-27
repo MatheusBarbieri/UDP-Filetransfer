@@ -39,8 +39,10 @@ public:
     void commandLoop();
     void taskManager();
 
+    uint32_t getFolderVersion();
+
     void uploadFile(std::string filepath);
     void downloadFile(std::string filepath);
     void deleteFile(std::string filepath);
-    void exit();
+    bool exitTaskManager();
 };

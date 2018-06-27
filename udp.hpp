@@ -20,6 +20,7 @@
 #define DATAGRAM 4
 #define DATAFILE 5
 #define ENDFILE 6
+#define TIMEOUT -99
 
 
 typedef struct datagram {
@@ -49,10 +50,13 @@ protected:
 public:
     int sendDatagram(Datagram &dg);
     int recDatagram();
+    int sendDatagramMaxTries(Datagram &dg, int maxTries);
+    int recDatagramTimeOut(int timeOut);
     char sendbuffer[DGRAMSIZE];
     char recvbuffer[DGRAMSIZE];
     long recvMessageSize;
 
+    std::string getUsername();
     Datagram* getRecvbuffer();
     int sendString(std::string str);
     std::string receiveString();

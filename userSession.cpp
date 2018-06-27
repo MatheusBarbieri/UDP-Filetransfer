@@ -8,7 +8,7 @@
 
 #include "userSession.hpp"
 
-UserSession::UserSession(UDPServer &udpserver, User* user){
+UserSession::UserSession(UDPServer udpserver, User* user){
     this->user = user;
     this->udpServer = udpserver;
 }
@@ -16,7 +16,7 @@ UserSession::UserSession(UDPServer &udpserver, User* user){
 void UserSession::runSession(){
     int status;
     bool running = true;
-    Datagram* message = (Datagram*) udpServer.recvbuffer;
+    Datagram* message = udpServer.getRecvbuffer();
     zerosDatagram(message);
     while(running){
         status = udpServer.recDatagram();
