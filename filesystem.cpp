@@ -67,8 +67,8 @@ std::map<std::string, Fileinfo> readFolder(std::string path) {
 }
 
 void printFiles(std::map<std::string, Fileinfo> &files) {
-    for (auto it = files.begin(); it != files.end(); it++) {
-        Fileinfo info = (*it).second;
+    for (auto const it : files) {
+        Fileinfo info = it.second;
         std::cerr << " - " << info.name << '\n';
     }
 }
