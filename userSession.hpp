@@ -18,10 +18,11 @@ public:
     UDPServer udpServer;
     UserSession(UDPServer &udpserver, User* user);
     void runSession();
-    uploadFile();
-    downloadFile();
-    deleteFile();
-    listDir();
-    dirVersion();
-    exit();
+
+    uint32_t uploadFile(std::string filename);
+    Fileinfo downloadFile(std::string filename);
+    uint32_t deleteFile(std::string filename);
+    uint32_t listDir();
+    uint32_t dirVersion();
+    uint32_t exit();
 };

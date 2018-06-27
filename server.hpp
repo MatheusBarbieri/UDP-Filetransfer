@@ -13,10 +13,9 @@
 class Server {
 private:
     std::string serverFolder;
-    std::vector<User> users;
     std::mutex usersMutex;
     std::map<std::string, User> users;
-    
+
 public:
     Server();
 

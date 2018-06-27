@@ -36,7 +36,6 @@ public:
 
     void startThreads();
     void inotifyLoop();
-    void syncDirPoll();
     void commandLoop();
     void taskManager();
 

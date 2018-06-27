@@ -47,7 +47,7 @@ protected:
     std::string username;
 
 public:
-    int sendDatagram(Datagram dg);
+    int sendDatagram(Datagram &dg);
     int recDatagram();
     char sendbuffer[DGRAMSIZE];
     char recvbuffer[DGRAMSIZE];

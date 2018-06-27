@@ -96,7 +96,7 @@ struct sockaddr_in* UDPConnection::getAddrFrom(){
     return &socketAddrFrom;
 }
 
-int UDPConnection::sendDatagram(Datagram dg) {
+int UDPConnection::sendDatagram(Datagram &dg) {
     socklen_t socketSize = sizeof(socketAddr);
     int status = 0;
 

@@ -16,14 +16,13 @@ UserSession::UserSession(UDPServer &udpserver, User* user){
 void UserSession::runSession(){
     int status;
     bool running = true;
-    Datagram message;
-    zerosDatagram(&message);
+    Datagram* message = (Datagram*) udpServer.recvbuffer;
+    zerosDatagram(message);
     while(running){
         status = udpServer.recDatagram();
         if (status == 0){
-            memcpy(&message, (const void*) &udpServer.recvbuffer, DATASIZE);
             user->actionMutex.lock();
-            switch (message.type) {
+            switch (message->type) {
                 case UPLOAD:
 
                     break;
@@ -49,9 +48,11 @@ void UserSession::runSession(){
                     free(info);
                 } break;
                 case FOLDER_VERSION:
-
+                    message->seqNumber = user->getFolderVersion();
+                    udpServer.sendDatagram(*message);
                     break;
                 case EXIT:
+                    udpServer.sendDatagram(*message);
                     running = false;
                     break;
                 default:
@@ -59,9 +60,11 @@ void UserSession::runSession(){
                     break;
             }
             user->actionMutex.unlock();
+        } else if (status == TIMEOUT){
+            std::cout << "Response timed out." << std::endl;
         } else {
             std::cout << "Error on receiving datagram, exiting process." << std::endl;
-            running = 0;
+            running = false;
         }
     }
 }

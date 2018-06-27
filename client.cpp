@@ -18,7 +18,6 @@ Client::Client(std::string username, UDPClient &udpclient){
 void Client::startThreads(){
   running = true;
   std::thread inotifyLoop = std::thread(&Client::inotifyLoop, this);
-  std::thread syncDirPoll = std::thread(&Client::syncDirPoll, this);
   std::thread commandLoop = std::thread(&Client::commandLoop, this);
   std::thread taskManager = std::thread(&Client::taskManager, this);
   taskManager.join();
@@ -97,14 +96,6 @@ void Client::inotifyLoop(){
     close(fd);
 }
 
-void Client::syncDirPoll(){
-    Task syncdirTask(SYNCDIR);
-    while(true) {
-      usleep(10000000); //10 seconds
-      addTaskToQueue(syncdirTask);
-    }
-}
-
 void Client::commandLoop(){
     std::string command, filename;
     while (true) {
@@ -138,7 +129,11 @@ void Client::commandLoop(){
 }
 
 void Client::taskManager() {
-    while(true){
+    bool running = true;
+    while(running){
+        Datagram message, *recData;
+        recData = (Datagram*) &udpClient.recvbuffer;
+        int status;
         Task task = getTaskFromQueue();
         switch (task.getType()) {
             case DOWNLOAD:
@@ -158,9 +153,15 @@ void Client::taskManager() {
 
                 break;
             case EXIT:
-
+                message.type = EXIT;
+                status = udpClient.sendDatagram(message);
+                if (status == 0){
+                    status = udpClient.recDatagram();
+                }
+                if (status == 0 and recData->type == EXIT){
+                    running = false;
+                }
                 break;
-
         }
     }
 }
