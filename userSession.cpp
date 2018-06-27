@@ -33,9 +33,21 @@ void UserSession::runSession(){
                 case DELETE:
 
                     break;
-                case SERVERDIR:
+                case SERVERDIR: {
+                    int numFiles = user->files.size();
 
-                    break;
+                    s_fileinfo *info = calloc(numFiles, sizeof(s_fileinfo));
+                    int i = 0;
+                    for (auto const ent : user->files) {
+                        Fileinfo fileinfo = ent.second;
+                        strncpy(info[i].name, fileinfo.name.c_str(), 255);
+                        info[i].mod = htonl(fileinfo.mod);
+                        info[i].size = htonl(fileinfo.size);
+                        i += 1;
+                    }
+                    udpServer.sendMessage((char*) info, sizeof(s_fileinfo) * numFiles);
+                    free(info);
+                } break;
                 case FOLDER_VERSION:
 
                     break;

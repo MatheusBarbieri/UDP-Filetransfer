@@ -24,5 +24,11 @@ public:
     uint32_t size;
 };
 
+typedef struct fileinfo {
+    char name[256];
+    uint32_t mod;
+    uint32_t size;
+} s_fileinfo;
+
 std::map<std::string, Fileinfo> readFolder(std::string path);
 void printFiles(std::map<std::string, Fileinfo> &files);
