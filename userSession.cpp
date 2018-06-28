@@ -28,8 +28,56 @@ void UserSession::runSession(){
             user->actionMutex.lock();
             switch (message->type) {
                 case UPLOAD:
-
+                {
+                    Datagram dg;
+                    s_fileinfo *sinfo = (s_fileinfo*) message->data;
+                    Fileinfo info;
+                    info.mod = ntohl(sinfo->mod);
+                    info.size = ntohl(sinfo->size);
+                    info.name = sinfo->name;
+                    auto it = user->files.find(info.name);
+                    if (it != user->files.end()){
+                        if (info.mod == it->second.mod && info.size == it->second.size){
+                            dg.type = DECLINE;
+                            dg.seqNumber = 0;
+                            dg.size = 0;
+                            udpServer.sendDatagram(dg);
+                            break;
+                        }
+                    }
+                    dg.type = ACCEPT;
+                    dg.seqNumber = 0;
+                    dg.size = 0;
+                    udpServer.sendDatagram(dg);
                     break;
+                }
+/*
+                    int status;
+                    Fileinfo info = getFileinfo(filepath);
+                    Datagram dg;
+                    Datagram* dgRcv;
+                    s_fileinfo *sinfo = (s_fileinfo*) dg.data;
+                    sinfo->mod = htonl(info.mod);
+                    sinfo->size = htonl(info.size);
+                    strncpy(sinfo->name, info.name.c_str(), sizeof(sinfo->name));
+                    dg.type = UPLOAD;
+                    dg.seqNumber = 0;
+                    dg.size = sizeof(s_fileinfo);
+                    udpClient.sendDatagram(dg);
+                    status = udpClient.recDatagram();
+                    dgRcv = udpClient.getRecvbuffer();
+                    if (dgRcv->type == DECLINE) {
+                        return;
+                    }
+                    FILE* file = fopen(filepath.c_str(), "rb");
+                    udpClient.sendFile(file);
+                    status = udpClient.recDatagram();
+                    dgRcv = udpClient.getRecvbuffer();
+                    struct utimbuf modTime;
+                    modTime.modtime = ntohl(sinfo->mod);
+                    modTime.actime = modTime.modtime;
+                    utime(info.name.c_str(), &modTime);
+                    return;*/
                 case DOWNLOAD:
 
                     break;

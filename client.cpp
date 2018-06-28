@@ -5,6 +5,8 @@
 #include <regex>
 #include <thread>
 #include <sys/inotify.h>
+#include <sys/types.h>
+#include <utime.h>
 
 #include "client.hpp"
 
@@ -159,6 +161,36 @@ bool Client::exitTaskManager(){
     return true;
 }
 
+//TODO: check if path is different folder
+void Client::uploadFile(std::string filepath){
+    int status;
+    Fileinfo info = getFileinfo(filepath);
+    Datagram dg;
+    Datagram* dgRcv;
+    s_fileinfo *sinfo = (s_fileinfo*) dg.data;
+    sinfo->mod = htonl(info.mod);
+    sinfo->size = htonl(info.size);
+    strncpy(sinfo->name, info.name.c_str(), sizeof(sinfo->name));
+    dg.type = UPLOAD;
+    dg.seqNumber = 0;
+    dg.size = sizeof(s_fileinfo);
+    udpClient.sendDatagram(dg);
+    status = udpClient.recDatagram();
+    dgRcv = udpClient.getRecvbuffer();
+    if (dgRcv->type == DECLINE) {
+        return;
+    }
+    FILE* file = fopen(filepath.c_str(), "rb");
+    udpClient.sendFile(file);
+    status = udpClient.recDatagram();
+    dgRcv = udpClient.getRecvbuffer();
+    struct utimbuf modTime;
+    modTime.modtime = ntohl(sinfo->mod);
+    modTime.actime = modTime.modtime;
+    utime(info.name.c_str(), &modTime);
+    return;
+}
+
 void Client::taskManager(){
     bool running = true;
     while(running){
@@ -169,6 +201,7 @@ void Client::taskManager(){
                 break;
             case UPLOAD:
                 std::cout << "Fez upload: " << task.getInfo() << std::endl;
+                uploadFile(task.getInfo());
                 break;
             case DELETE:
                 std::cout << "Deletou: " << task.getInfo() << std::endl;

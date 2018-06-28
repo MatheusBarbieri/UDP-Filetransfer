@@ -12,6 +12,8 @@
 #define FOLDER_VERSION 11
 #define SERVERDIR 12
 #define EXIT 13
+#define DECLINE 14
+#define ACCEPT 15
 
 Datagram createMessage(int type, std::string value);
 
