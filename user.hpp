@@ -22,6 +22,7 @@ public:
     std::mutex actionMutex;
 
     User(std::string username);
+    ~User();
 
     bool canConnect();
     int startUserSession(User &user, UDPServer udpserver);

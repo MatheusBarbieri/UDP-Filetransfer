@@ -13,6 +13,10 @@ UserSession::UserSession(UDPServer udpserver, User* user){
     this->udpServer = udpserver;
 }
 
+UserSession::~UserSession(){
+  std::cout << "Deleting UserSession" << std::endl;
+}
+
 void UserSession::runSession(){
     int status;
     bool running = true;

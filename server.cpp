@@ -12,6 +12,10 @@ Server::Server(){
     this->serverFolder = setUpServerFolder();
 }
 
+Server::~Server(){
+  std::cout << "Deleting Server" << std::endl;
+}
+
 std::map<std::string, User>& Server::getUsers(){
     return users;
 }

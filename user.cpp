@@ -7,6 +7,10 @@ User::User(std::string username){
     this->files = readFolder(this->userFolder);
 }
 
+User::~User(){
+  std::cout << "Deleting User" << std::endl;
+}
+
 bool User::canConnect(){
     return (userSessions.size() < 2);
 }

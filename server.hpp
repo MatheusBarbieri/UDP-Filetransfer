@@ -18,6 +18,7 @@ private:
 
 public:
     Server();
+    ~Server();
     bool existUser(std::string username);
     int createUser();
     std::map<std::string, User>& getUsers();
