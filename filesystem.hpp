@@ -32,3 +32,4 @@ typedef struct fileinfo {
 
 std::map<std::string, Fileinfo> readFolder(std::string path);
 void printFiles(std::map<std::string, Fileinfo> &files);
+Fileinfo getFileinfo(std::string filepath);
