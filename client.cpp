@@ -161,7 +161,6 @@ bool Client::exitTaskManager(){
     return true;
 }
 
-//TODO: check if path is different folder
 void Client::uploadFile(std::string filepath){
     int status;
     Fileinfo info = getFileinfo(filepath);
@@ -189,6 +188,26 @@ void Client::uploadFile(std::string filepath){
     modTime.actime = modTime.modtime;
     utime(info.name.c_str(), &modTime);
     return;
+}
+
+void Client::downloadFile(std::string filepath){
+    Datagram dg;
+    Datagram *dgRcv;
+    Fileinfo info;
+    s_fileinfo *sinfo = (s_fileinfo*) dg.data;
+    std::string filename = basename(filepath.c_str());
+    strncpy(sinfo->name, filename.c_str(), 255);
+    dg.type = DOWNLOAD;
+    dg.seqNumber = 0;
+    dg.size = sizeof(s_fileinfo);
+    udpClient.sendDatagram(dg);
+    dgRcv = udpClient.getRecvbuffer();
+    if (dgRcv->type != ACCEPT) {
+        return;
+    }
+    info.mod = ntohl(sinfo->mod);
+    info.size = ntohl(sinfo->size);
+
 }
 
 void Client::taskManager(){
