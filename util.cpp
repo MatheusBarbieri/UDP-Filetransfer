@@ -13,6 +13,11 @@ Datagram createMessage(int type, std::string value){
     return datagram;
 }
 
+int generatePort(){
+    static int port = 30000;
+    return port++;
+}
+
 Semaphore::Semaphore() {
   if (initialized) {
     sem_destroy(&this->c_sem);
