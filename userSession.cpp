@@ -8,9 +8,9 @@
 
 #include "userSession.hpp"
 
-UserSession::UserSession(udpserver_ptr udpserver, user_ptr user){
+UserSession::UserSession(udpclient_ptr udpconnection, user_ptr user){
     this->user = std::move(user);
-    this->udpServer = std::move(udpserver);
+    this->udpConnection = std::move(udpconnection);
 }
 
 UserSession::~UserSession(){

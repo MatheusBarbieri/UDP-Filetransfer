@@ -26,6 +26,14 @@
 
 #define TIMEOUT -99
 
+class UDPSocket;
+class UDPConnection;
+class UDPServer;
+class UDPClient;
+
+typedef std::shared_ptr<UDPServer> udpserver_ptr;
+typedef std::shared_ptr<UDPConnection> udpconnection_ptr;
+typedef std::shared_ptr<UDPClient> udpclient_ptr;
 
 typedef struct datagram {
     int type;
@@ -38,7 +46,7 @@ void zerosDatagram (Datagram* dg);
 
 class UDPSocket {
 protected:
-    struct sockaddr_in socketAddr;
+    struct sockaddr_in socketAddrLocal;
     int socketDesc;
 public:
     struct sockaddr_in* getAddr();
@@ -46,12 +54,13 @@ public:
 };
 
 class UDPConnection: public UDPSocket {
+friend class UDPServer;
 protected:
     bool connected;
-    std::string username;
+    int port;
 
 public:
-    struct sockaddr_in socketAddrFrom;
+    struct sockaddr_in socketAddrRemote;
     int sendDatagram(Datagram &dg);
     int recDatagram();
     int sendDatagramMaxTries(Datagram &dg, int maxTries);
@@ -89,8 +98,6 @@ public:
     UDPServer(int port);
     UDPServer(sockaddr_in sockaddrfrom, int port);
     ~UDPServer();
-    int accept();
-    int reject();
-    int connect();
+    udpconnection_ptr accept();
     void _bind();
 };
