@@ -14,7 +14,6 @@
 #define SERVERDIR 12
 #define EXIT 13
 #define DECLINE 14
-#define ACCEPT 15
 
 class Server;
 class User;

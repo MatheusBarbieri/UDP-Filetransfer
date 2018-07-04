@@ -10,13 +10,6 @@
 
 #include "util.hpp"
 
-std::string findClientFolder(std::string username);
-std::string setUpClientFolder(std::string username);
-std::string findServerFolder();
-std::string setUpServerFolder();
-std::string findUserFolder(std::string username);
-std::string setUpUserFolder(std::string username);
-
 class Fileinfo {
 public:
     std::string name;
@@ -31,6 +24,13 @@ typedef struct fileinfo {
     uint32_t size;
 } s_fileinfo;
 
-std::map<std::string, Fileinfo> readFolder(std::string path);
+std::string findClientFolder(std::string username);
+std::string setUpClientFolder(std::string username);
+std::string findServerFolder();
+std::string setUpServerFolder();
+std::string findUserFolder(std::string username);
+std::string setUpUserFolder(std::string username);
 void printFiles(std::map<std::string, Fileinfo> &files);
+std::map<std::string, Fileinfo> readFolder(std::string path);
+
 Fileinfo getFileinfo(std::string filepath);

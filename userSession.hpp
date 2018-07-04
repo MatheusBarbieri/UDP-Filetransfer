@@ -16,6 +16,7 @@ private:
     user_ptr user;
 public:
     ~UserSession();
+    std::thread thread;
     udpserver_ptr udpServer;
     UserSession(udpserver_ptr rudpserver, user_ptr user);
     void runSession();

@@ -41,14 +41,14 @@ void UserSession::runSession(){
                             dg.type = DECLINE;
                             dg.seqNumber = 0;
                             dg.size = 0;
-                            udpServer.sendDatagram(dg);
+                            udpServer->sendDatagram(dg);
                             break;
                         }
                     }
                     dg.type = ACCEPT;
                     dg.seqNumber = 0;
                     dg.size = 0;
-                    udpServer.sendDatagram(dg);
+                    udpServer->sendDatagram(dg);
                     break;
                 }
 /*
