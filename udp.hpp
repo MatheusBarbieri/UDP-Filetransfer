@@ -20,6 +20,10 @@
 #define DATAGRAM 4
 #define DATAFILE 5
 #define ENDFILE 6
+
+#define ACCEPT 30
+#define REJECT 31
+
 #define TIMEOUT -99
 
 
@@ -44,10 +48,10 @@ public:
 class UDPConnection: public UDPSocket {
 protected:
     bool connected;
-    struct sockaddr_in socketAddrFrom;
     std::string username;
 
 public:
+    struct sockaddr_in socketAddrFrom;
     int sendDatagram(Datagram &dg);
     int recDatagram();
     int sendDatagramMaxTries(Datagram &dg, int maxTries);
@@ -76,13 +80,17 @@ public:
     UDPClient(std::string username, int port, std::string ip);
     ~UDPClient();
     int connect();
+    int waitResponse();
 };
 
 class UDPServer: public UDPConnection {
 public:
     UDPServer();
     UDPServer(int port);
+    UDPServer(sockaddr_in sockaddrfrom, int port);
     ~UDPServer();
+    int accept();
+    int reject();
     int connect();
     void _bind();
 };

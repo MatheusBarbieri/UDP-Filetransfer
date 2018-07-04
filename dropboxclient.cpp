@@ -18,9 +18,18 @@ int main(int argc, char **argv){
     UDPClient udpclient(username, port, host);
     Client client(username, udpclient);
     client.udpClient.connect();
+    int response;
+    response = client.udpClient.waitResponse();
+    std::cout << "Response: " << response << std::endl;
+    if (response == ACCEPT){
+        std::cout << "Logado com sucesso!" << std::endl;
+    } else {
+        std::cout << "Não foi possível efetuar o login, já existem 2 clients logados para este usuário." << std::endl;
+        return 0;
+    }
 
     Datagram dg;
-    std::cout << "here\n";
+    std::cout << "Teste\n";
     int test = client.udpClient.sendDatagramMaxTries(dg, 5);
 
     std::cout << "test: " << test << std::endl;

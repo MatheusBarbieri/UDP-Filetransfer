@@ -1,5 +1,10 @@
 #include "filesystem.hpp"
 
+Fileinfo::Fileinfo() {
+    mod = 0;
+    size = 0;
+}
+
 std::string findClientFolder(std::string username){
     const char *homedir;
     if ((homedir = getenv("HOME")) == NULL) {
@@ -77,13 +82,13 @@ Fileinfo getFileinfo(std::string filepath) {
   struct stat path_stat;
   const char *fp = filepath.c_str();
   stat(fp, &path_stat);
+  Fileinfo info;
   if (S_ISREG(path_stat.st_mode)) {
-    Fileinfo info;
     info.mod = path_stat.st_mtime;
     info.size = path_stat.st_size;
     info.name = basename(fp);
-    return info;
   }
+  return info;
 }
 
 std::string findUserFolder(std::string username){

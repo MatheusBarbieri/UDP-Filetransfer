@@ -12,11 +12,12 @@
 class UserSession;
 
 class User{
-private:
+friend class UserSession;
+protected:
     std::string username;
     std::string userFolder;
     uint32_t folderVersion;
-    std::vector<UserSession> userSessions;
+    std::vector<usersession_ptr> userSessions;
 public:
     std::map<std::string, Fileinfo> files;
     std::mutex actionMutex;
@@ -25,7 +26,7 @@ public:
     ~User();
 
     bool canConnect();
-    int startUserSession(User &user, UDPServer udpserver);
+    int addSession(usersession_ptr userSession);
     int endUserSession();
 
     uint32_t getFolderVersion();

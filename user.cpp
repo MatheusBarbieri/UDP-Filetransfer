@@ -15,7 +15,8 @@ bool User::canConnect(){
     return (userSessions.size() < 2);
 }
 
-int User::startUserSession(User &user, UDPServer udpserver){
+int User::addSession(usersession_ptr userSession){
+    userSessions.push_back(userSession);
     return 0;
 }
 

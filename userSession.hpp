@@ -13,11 +13,11 @@ class User;
 
 class UserSession {
 private:
-    User* user;
+    user_ptr user;
 public:
-    UDPServer udpServer;
-    UserSession(UDPServer udpserver, User* user);
     ~UserSession();
+    udpserver_ptr udpServer;
+    UserSession(udpserver_ptr rudpserver, user_ptr user);
     void runSession();
 
     uint32_t uploadFile(std::string filename);

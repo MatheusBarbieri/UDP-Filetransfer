@@ -13,6 +13,7 @@
 #include <string>
 
 #include "udp.hpp"
+#include "util.hpp"
 
 
 ///////////////////////////////////////////////////////////
@@ -50,7 +51,7 @@ UDPClient::UDPClient(std::string username, int port, std::string ip){
     bzero(&(sockaddr.sin_zero), 8);
 
     socketDesc = socketd;
-    socketAddr = sockaddr;
+    socketAddrFrom = sockaddr;
     this->username = username;
 }
 
@@ -74,6 +75,16 @@ UDPServer::UDPServer(int port){
 
     UDPServer::socketDesc = socketd;
     UDPServer::socketAddr = sockaddr;
+}
+
+UDPServer::UDPServer(struct sockaddr_in sockaddrfrom, int port){
+    int socketd = socket(AF_INET, SOCK_DGRAM, 0);
+    if (socketd == -1){
+        std::cout << "[Error] Could not open socket." << std::endl;
+    }
+
+    UDPServer::socketDesc = socketd;
+    UDPServer::socketAddrFrom = sockaddrfrom;
 }
 
 UDPServer::~UDPServer(void){
@@ -114,7 +125,7 @@ int UDPConnection::sendDatagram(Datagram &dg) {
                         (char*) &dg,
                         DGRAMSIZE,
                         0,
-                        (struct sockaddr *) &socketAddr,
+                        (struct sockaddr *) &socketAddrFrom,
                         socketSize
         );
         if (status >= 0){
@@ -154,7 +165,7 @@ int UDPConnection::sendDatagramMaxTries(Datagram &dg, int maxTries) {
                         (char*) &dg,
                         DGRAMSIZE,
                         0,
-                        (struct sockaddr *) &socketAddr,
+                        (struct sockaddr *) &socketAddrFrom,
                         socketSize
         );
         if (status >= 0){
@@ -433,10 +444,38 @@ int UDPClient::connect(){
     return sent;
 }
 
+int UDPClient::waitResponse(){
+    recDatagram();
+    if (getRecvbuffer()->type == ACCEPT){
+        return ACCEPT;
+    } else if (getRecvbuffer()->type == REJECT){
+        return REJECT;
+    }
+    return REJECT;
+}
+
+int UDPServer::accept(){
+    int port = generatePort();
+    Datagram acceptDatagram;
+    zerosDatagram(&acceptDatagram);
+    acceptDatagram.type = ACCEPT;
+    acceptDatagram.seqNumber = generatePort();
+    int sent = sendDatagram(acceptDatagram);
+    return sent;
+}
+
+int UDPServer::reject(){
+    Datagram rejectDatagram;
+    zerosDatagram(&rejectDatagram);
+    rejectDatagram.type = REJECT;
+    rejectDatagram.seqNumber = -1;
+    int sent = sendDatagram(rejectDatagram);
+    return sent;
+}
+
 int UDPServer::connect(){
     int received = recDatagram();
     username = getRecvbuffer()->data;
-    std::cout << "Usuário " << username << " logado!" << std::endl;
     return received;
 }
 

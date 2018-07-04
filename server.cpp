@@ -16,7 +16,7 @@ Server::~Server(){
   std::cout << "Deleting Server" << std::endl;
 }
 
-std::map<std::string, User>& Server::getUsers(){
+std::map<std::string, user_ptr>& Server::getUsers(){
     return users;
 }
 

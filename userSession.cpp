@@ -8,9 +8,9 @@
 
 #include "userSession.hpp"
 
-UserSession::UserSession(UDPServer udpserver, User* user){
-    this->user = user;
-    this->udpServer = udpserver;
+UserSession::UserSession(udpserver_ptr udpserver, user_ptr user){
+    this->user = std::move(user);
+    this->udpServer = std::move(udpserver);
 }
 
 UserSession::~UserSession(){
@@ -18,13 +18,13 @@ UserSession::~UserSession(){
 }
 
 void UserSession::runSession(){
-    int status;
+    int status = 0;
     bool running = true;
-    Datagram* message = udpServer.getRecvbuffer();
+    Datagram* message = udpServer->getRecvbuffer();
     zerosDatagram(message);
     while(running){
-        status = udpServer.recDatagram();
-        if (status == 0){
+        status = udpServer->recDatagram();
+        if (status >= 0){
             user->actionMutex.lock();
             switch (message->type) {
                 case UPLOAD:
@@ -96,15 +96,15 @@ void UserSession::runSession(){
                         info[i].size = htonl(fileinfo.size);
                         i += 1;
                     }
-                    udpServer.sendMessage((char*) info, sizeof(s_fileinfo) * numFiles);
+                    udpServer->sendMessage((char*) info, sizeof(s_fileinfo) * numFiles);
                     free(info);
                 } break;
                 case FOLDER_VERSION:
                     message->seqNumber = user->getFolderVersion();
-                    udpServer.sendDatagram(*message);
+                    udpServer->sendDatagram(*message);
                     break;
                 case EXIT:
-                    udpServer.sendDatagram(*message);
+                    udpServer->sendDatagram(*message);
                     running = false;
                     break;
                 default:

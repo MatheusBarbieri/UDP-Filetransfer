@@ -14,14 +14,14 @@ class Server {
 private:
     std::string serverFolder;
     std::mutex usersMutex;
-    std::map<std::string, User> users;
+    std::map<std::string, user_ptr> users;
 
 public:
     Server();
     ~Server();
     bool existUser(std::string username);
     int createUser();
-    std::map<std::string, User>& getUsers();
+    std::map<std::string, user_ptr>& getUsers();
 
     std::string getServerFolder();
 };

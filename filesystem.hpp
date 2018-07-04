@@ -22,6 +22,7 @@ public:
     std::string name;
     time_t mod;
     uint32_t size;
+    Fileinfo();
 };
 
 typedef struct fileinfo {
