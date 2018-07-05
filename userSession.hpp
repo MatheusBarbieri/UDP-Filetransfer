@@ -18,7 +18,7 @@ public:
     ~UserSession();
     std::thread thread;
     udpconnection_ptr udpConnection;
-    UserSession(udpserver_ptr rudpserver, user_ptr user);
+    UserSession(udpconnection_ptr conn, user_ptr user);
     void runSession();
 
     uint32_t uploadFile(std::string filename);

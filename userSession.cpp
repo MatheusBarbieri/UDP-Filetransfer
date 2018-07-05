@@ -8,7 +8,7 @@
 
 #include "userSession.hpp"
 
-UserSession::UserSession(udpclient_ptr udpconnection, user_ptr user){
+UserSession::UserSession(udpconnection_ptr udpconnection, user_ptr user){
     this->user = std::move(user);
     this->udpConnection = std::move(udpconnection);
 }
@@ -20,10 +20,10 @@ UserSession::~UserSession(){
 void UserSession::runSession(){
     int status = 0;
     bool running = true;
-    Datagram* message = udpServer->getRecvbuffer();
+    Datagram* message = udpConnection->getRecvbuffer();
     zerosDatagram(message);
     while(running){
-        status = udpServer->recDatagram();
+        status = udpConnection->recDatagram();
         if (status >= 0){
             user->actionMutex.lock();
             switch (message->type) {
@@ -41,14 +41,14 @@ void UserSession::runSession(){
                             dg.type = DECLINE;
                             dg.seqNumber = 0;
                             dg.size = 0;
-                            udpServer->sendDatagram(dg);
+                            udpConnection->sendDatagram(dg);
                             break;
                         }
                     }
                     dg.type = ACCEPT;
                     dg.seqNumber = 0;
                     dg.size = 0;
-                    udpServer->sendDatagram(dg);
+                    udpConnection->sendDatagram(dg);
                     break;
                 }
 /*
@@ -96,15 +96,15 @@ void UserSession::runSession(){
                         info[i].size = htonl(fileinfo.size);
                         i += 1;
                     }
-                    udpServer->sendMessage((char*) info, sizeof(s_fileinfo) * numFiles);
+                    udpConnection->sendMessage((char*) info, sizeof(s_fileinfo) * numFiles);
                     free(info);
                 } break;
                 case FOLDER_VERSION:
                     message->seqNumber = user->getFolderVersion();
-                    udpServer->sendDatagram(*message);
+                    udpConnection->sendDatagram(*message);
                     break;
                 case EXIT:
-                    udpServer->sendDatagram(*message);
+                    udpConnection->sendDatagram(*message);
                     running = false;
                     break;
                 default:

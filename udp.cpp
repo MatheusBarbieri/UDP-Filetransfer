@@ -20,9 +20,8 @@
 ///////////////// NON CLASS FUNCTIONS /////////////////////
 ///////////////////////////////////////////////////////////
 
-void zerosDatagram (Datagram* dg){
-    memset(dg, '\0', DGRAMSIZE);
-}
+int getFileSize(FILE *file);
+void zerosDatagram (Datagram* dg);
 
 ///////////////////////////////////////////////////////////
 //////////////// END NON CLASS FUNCTIONS //////////////////
@@ -48,40 +47,34 @@ UDPServer::UDPServer(int port){
     bzero(&(sockaddr.sin_zero), 8);
 
     socketDesc = socketd;
-    socketAddr = sockaddr;
-}
-
-UDPServer::UDPServer(struct sockaddr_in sockaddrremote, int port){
-    int socketd = socket(AF_INET, SOCK_DGRAM, 0);
-    if (socketd == -1){
-        std::cout << "[Error] Could not open socket." << std::endl;
-    }
-
-    UDPServer::socketDesc = socketd;
-    UDPServer::socketAddrRemote = sockaddrremote;
+    socketAddrLocal = sockaddr;
+    socketAddrRemote = sockaddr;
 }
 
 UDPServer::~UDPServer(void){
-    close(this->socketDesc);
+    ::close(this->socketDesc);
 }
 
 void UDPServer::_bind(){
-    if (bind(socketDesc, (struct sockaddr *) &socketAddr, sizeof(struct sockaddr)) < 0){
+    if (bind(socketDesc, (struct sockaddr *) &socketAddrLocal, sizeof(struct sockaddr)) < 0){
         std::cout << "[Error] could not bind the given socket. Is adress already bound?" << std::endl;
         exit(0);
     }
 }
 
 udpconnection_ptr UDPServer::accept() {
-    int received = recDatagram();
+    recDatagram();
     int port = generatePort();
+    Datagram* recvDg = getRecvbuffer();
     Datagram acceptDatagram;
     zerosDatagram(&acceptDatagram);
     acceptDatagram.type = ACCEPT;
-    acceptDatagram.seqNumber = generatePort();
+    acceptDatagram.seqNumber = port;
+
     int sent = sendDatagram(acceptDatagram);
     udpconnection_ptr udpconnection(new UDPConnection());
     udpconnection->socketAddrRemote = socketAddrRemote;
+    udpconnection->socketAddrRemote.sin_port = htons(port);
 
     return udpconnection;
 }
@@ -92,7 +85,7 @@ udpconnection_ptr UDPServer::accept() {
 
 UDPClient::UDPClient(){}
 
-UDPClient::UDPClient(int port, std::string ip){
+UDPClient::UDPClient(int port, std::string ip) {
     int socketd = 0;
     if ((socketd = socket(AF_INET, SOCK_DGRAM, 0)) == -1){
         std::cout << "[Error] Could not open socket." << std::endl;
@@ -115,7 +108,7 @@ UDPClient::UDPClient(int port, std::string ip){
 }
 
 UDPClient::~UDPClient(void){
-    close(this->socketDesc);
+    ::close(this->socketDesc);
 }
 
 int UDPClient::connect(){
@@ -130,30 +123,43 @@ int UDPClient::connect(){
 int UDPClient::waitResponse(){
     recDatagram();
     if (getRecvbuffer()->type == ACCEPT){
+        Datagram* received = getRecvbuffer();
+        socketAddrRemote.sin_port = received->seqNumber;
         return ACCEPT;
-    } else if (getRecvbuffer()->type == REJECT){
-        return REJECT;
     }
     return REJECT;
 }
 
 struct sockaddr_in* UDPSocket::getAddr(){
-    return &socketAddr;
+    return &socketAddrLocal;
 }
 
 int UDPSocket::getSocketDesc(){
     return socketDesc;
 }
 
-struct sockaddr_in* UDPConnection::getAddrFrom(){
+///////////////////////////////////////////////////////////
+///////////////////// UDPConnection ///////////////////////
+///////////////////////////////////////////////////////////
+
+struct sockaddr_in* UDPConnection::getAddrRemote(){
     return &socketAddrRemote;
 }
 
+void UDPConnection::close() {
+
+}
+
 int UDPConnection::sendDatagram(Datagram &dg) {
-    socklen_t socketSize = sizeof(socketAddr);
+    socklen_t socketSize = sizeof(socketAddrRemote);
     int status = 0;
 
     Datagram ack;
+    Datagram senddg;
+    senddg.type = htonl(dg.type);
+    senddg.seqNumber = htonl(dg.seqNumber);
+    senddg.size = htonl(dg.size);
+    memcpy(senddg.data, dg.data, DATASIZE);
     zerosDatagram(&ack);
 
     //0.3 seconds timeout on socket recv
@@ -164,7 +170,7 @@ int UDPConnection::sendDatagram(Datagram &dg) {
 
     while(true){
         status = sendto(getSocketDesc(),
-                        (char*) &dg,
+                        (char*) &senddg,
                         DGRAMSIZE,
                         0,
                         (struct sockaddr *) &socketAddrRemote,
@@ -190,7 +196,7 @@ int UDPConnection::sendDatagram(Datagram &dg) {
 }
 
 int UDPConnection::sendDatagramMaxTries(Datagram &dg, int maxTries) {
-    socklen_t socketSize = sizeof(socketAddr);
+    socklen_t socketSize = sizeof(socketAddrRemote);
     int status = 0, tries = 0;
 
     Datagram ack;
@@ -235,7 +241,7 @@ int UDPConnection::sendDatagramMaxTries(Datagram &dg, int maxTries) {
 
 int UDPConnection::recDatagram(){
 
-    socklen_t socketSize = sizeof(socketAddr);
+    socklen_t socketSize = sizeof(socketAddrRemote);
     struct timeval read_timeout;
     read_timeout.tv_sec = 0;
     read_timeout.tv_usec = 0;
@@ -273,11 +279,15 @@ int UDPConnection::recDatagram(){
                socketFromSize
         );
     }
+    Datagram* received = (Datagram*) &recvbuffer;
+    received->type = ntohl(received->type);
+    received->seqNumber = ntohl(received->seqNumber);
+    received->size = ntohl(received->size);
     return status;
 }
 
 int UDPConnection::recDatagramTimeOut(int timeOut){
-    socklen_t socketSize = sizeof(socketAddr);
+    socklen_t socketSize = sizeof(socketAddrRemote);
     struct timeval read_timeout;
     read_timeout.tv_usec = 0;
     read_timeout.tv_sec = timeOut;
@@ -390,13 +400,6 @@ char* UDPConnection::receiveMessage(){
     return receivedMessage;
 }
 
-int getFileSize(FILE *file){
-    fseek(file, 0L, SEEK_END);
-    int fileSize = ftell(file);
-    rewind(file);
-    return fileSize;
-}
-
 int UDPConnection::sendFile(FILE* file){
     int fileSize = getFileSize(file);
     int lastDatagramSize = fileSize%DATASIZE;
@@ -469,14 +472,21 @@ int UDPConnection::receiveFile(FILE* file){
     return receivedFile;
 }
 
-std::string UDPConnection::getUsername(){
-    return username;
-}
-
 Datagram* UDPConnection::getRecvbuffer(){
     return (Datagram*) &recvbuffer;
 }
 
 bool UDPConnection::isConnected(){
     return this->connected;
+}
+
+int getFileSize(FILE *file) {
+    fseek(file, 0L, SEEK_END);
+    int fileSize = ftell(file);
+    rewind(file);
+    return fileSize;
+}
+
+void zerosDatagram (Datagram* dg){
+    memset(dg, '\0', DGRAMSIZE);
 }

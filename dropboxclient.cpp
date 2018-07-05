@@ -15,16 +15,16 @@ int main(int argc, char **argv){
     std::string username = argv[1], host = argv[2];
     int port = atoi(argv[3]);
 
-    UDPClient udpclient(username, port, host);
+    UDPClient udpclient(port, host);
     Client client(username, udpclient);
     client.udpClient.connect();
     int response;
     response = client.udpClient.waitResponse();
     std::cout << "Response: " << response << std::endl;
     if (response == ACCEPT){
-        std::cout << "Logado com sucesso!" << std::endl;
+        std::cout << "Conectado com sucesso!" << std::endl;
     } else {
-        std::cout << "Não foi possível efetuar o login, já existem 2 clients logados para este usuário." << std::endl;
+        std::cout << "Não foi possível conectar." << std::endl;
         return 0;
     }
 

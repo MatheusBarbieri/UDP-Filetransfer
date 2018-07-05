@@ -36,9 +36,9 @@ typedef std::shared_ptr<UDPConnection> udpconnection_ptr;
 typedef std::shared_ptr<UDPClient> udpclient_ptr;
 
 typedef struct datagram {
-    int type;
-    int seqNumber;
-    int size;
+    int32_t type;
+    int32_t seqNumber;
+    int32_t size;
     char data[DATASIZE];
 } Datagram;
 
@@ -69,7 +69,6 @@ public:
     char recvbuffer[DGRAMSIZE];
     long recvMessageSize;
 
-    std::string getUsername();
     Datagram* getRecvbuffer();
     int sendString(std::string str);
     std::string receiveString();
@@ -79,24 +78,25 @@ public:
     long getRecvMessageSize();
     int receiveFile(FILE* file);
 
-    struct sockaddr_in* getAddrFrom();
+    struct sockaddr_in* getAddrRemote();
     bool isConnected();
+    void close();
 };
 
 class UDPClient: public UDPConnection {
 public:
     UDPClient();
-    UDPClient(std::string username, int port, std::string ip);
+    UDPClient(int port, std::string ip);
     ~UDPClient();
     int connect();
     int waitResponse();
+    void close();
 };
 
 class UDPServer: public UDPConnection {
 public:
     UDPServer();
     UDPServer(int port);
-    UDPServer(sockaddr_in sockaddrfrom, int port);
     ~UDPServer();
     udpconnection_ptr accept();
     void _bind();
