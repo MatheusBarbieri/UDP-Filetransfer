@@ -78,8 +78,8 @@ udpconnection_ptr UDPServer::accept() {
 
     udpconnection_ptr udpconnection(new UDPConnection(port, socketAddrRemote, socketAddrLocal));
 
-    socketAddrLocal.sin_addr.s_addr = INADDR_ANY;
-    bzero(&(socketAddrLocal.sin_zero), 8);
+    socketAddrRemote.sin_addr.s_addr = INADDR_ANY;
+    bzero(&(socketAddrRemote.sin_zero), 8);
 
     vlog("Server vai retornar conn");
     return udpconnection;
@@ -133,8 +133,23 @@ int UDPClient::waitResponse(){
     recDatagram();
     if (getRecvbuffer()->type == ACCEPT){
         Datagram* received = getRecvbuffer();
+        std::cerr << "port = " << received->seqNumber << '\n';
+        std::cerr << "htons(port) = " << htons(received->seqNumber) << '\n';
+
         socketAddrRemote.sin_port = htons(received->seqNumber);
+        socketAddrLocal.sin_port = htons(received->seqNumber);
+        bzero(&(socketAddrRemote.sin_zero), 8);
+        bzero(&(socketAddrLocal.sin_zero), 8);
+
+        ::close(this->socketDesc);
+        int socketd = 0;
+        if ((socketd = socket(AF_INET, SOCK_DGRAM, 0)) == -1){
+            std::cout << "[Error] Could not open socket." << std::endl;
+        }
+
+        socketDesc = socketd;
         return ACCEPT;
+
     }
     return REJECT;
 }
@@ -157,12 +172,18 @@ UDPConnection::UDPConnection(int port, sockaddr_in socketAddrRemote, sockaddr_in
     this->socketAddrLocal = socketAddrLocal;
     this->socketAddrRemote = socketAddrRemote;
     this->socketAddrRemote.sin_port = htons(port);
+    this->socketAddrLocal.sin_port = htons(port);
+    bzero(&(this->socketAddrLocal.sin_zero), 8);
+    bzero(&(this->socketAddrRemote.sin_zero), 8);
+
+    std::cerr << "port = " << port << '\n';
+    std::cerr << "htons(port) = " << htons(port) << '\n';
 
     if ((this->socketDesc = socket(AF_INET, SOCK_DGRAM, 0)) == -1){
         std::cout << "[Error] Could not open a new socket for connection." << std::endl;
     }
 
-    if (bind(socketDesc, (struct sockaddr *) &  socketAddrLocal, sizeof(struct sockaddr)) < 0){
+    if (bind(socketDesc, (struct sockaddr *) &  this->socketAddrLocal, sizeof(struct sockaddr)) < 0){
         std::cout << "[Error] could not bind the given socket. Is adress already bound?" << std::endl;
     }
 }
