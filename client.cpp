@@ -248,6 +248,27 @@ void Client::downloadFile(std::string filepath){
     return;
 }
 
+void Client::deleteFile(std::string filename){
+    filename = basename(filename.c_str());
+    std::string filepath = clientFolder + filename;
+    Datagram dg;
+    s_fileinfo *sinfo = (s_fileinfo*) dg.data;
+    strncpy(sinfo->name, filename.c_str(), 255);
+    sinfo->size = 0;
+    sinfo->mod = 0;
+    dg.type = DELETE;
+    dg.seqNumber = 0;
+    dg.size = 0;
+    udpClient.sendDatagram(dg);
+    Datagram *dgRcv;
+    udpClient.recDatagram();
+    dgRcv = udpClient.getRecvbuffer();
+
+    if (dgRcv->type == ACCEPT && access(filepath.c_str(), F_OK) != -1) {
+        remove(filepath.c_str());
+    }
+}
+
 void Client::taskManager(){
     bool running = true;
     while(running){
@@ -262,6 +283,7 @@ void Client::taskManager(){
                 uploadFile(task.getInfo());
                 break;
             case DELETE:
+                deleteFile(task.getInfo());
                 std::cout << "Deletou: " << task.getInfo() << std::endl;
                 break;
             case LOCALDIR:

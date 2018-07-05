@@ -44,6 +44,6 @@ public:
 
     void uploadFile(std::string filepath);
     void downloadFile(std::string filepath);
-    void deleteFile(std::string filepath);
+    void deleteFile(std::string filename);
     bool exitTaskManager();
 };

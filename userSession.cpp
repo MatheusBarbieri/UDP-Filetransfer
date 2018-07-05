@@ -105,8 +105,27 @@ void UserSession::runSession(){
                     break;
                 }
                 case DELETE:
+                {
+                    std::cerr << "DELETE (purging file)" << '\n';
+                    s_fileinfo *sinfo = (s_fileinfo*) message->data;
+                    Fileinfo info;
+                    info.name = sinfo->name;
+                    std::string filepath = user->userFolder + info.name;
 
+                    auto it = user->files.find(info.name);
+                    if (it != user->files.end()) {
+                        user->files.erase(it);
+                    }
+
+                    remove(filepath.c_str());
+
+                    Datagram dg;
+                    dg.type = ACCEPT;
+                    dg.seqNumber = 0;
+                    dg.size = 0;
+                    udpConnection->sendDatagram(dg);
                     break;
+                }
                 case SERVERDIR: {
                     int numFiles = user->files.size();
 
