@@ -29,6 +29,7 @@ void UserSession::runSession(){
             switch (message->type) {
                 case UPLOAD:
                 {
+                    std::cerr << "UPLOAD (receiving file)" << '\n';
                     Datagram dg;
                     s_fileinfo *sinfo = (s_fileinfo*) message->data;
                     Fileinfo info;
@@ -48,6 +49,17 @@ void UserSession::runSession(){
                     dg.type = ACCEPT;
                     dg.seqNumber = 0;
                     dg.size = 0;
+                    udpConnection->sendDatagram(dg);
+
+                    std::string filepath = user->userFolder + info.name;
+                    FILE* file = fopen(filepath.c_str(), "wb");
+                    udpConnection->receiveFile(file);
+                    fclose(file);
+
+                    // send file's new timestap
+                    info = getFileinfo(filepath);
+                    sinfo->mod = htonl(info.mod);
+                    sinfo->size = htonl(info.size);
                     udpConnection->sendDatagram(dg);
                     break;
                 }
