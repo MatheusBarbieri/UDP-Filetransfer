@@ -17,9 +17,9 @@ int main(int argc, char **argv){
 
     UDPClient udpclient(port, host);
     Client client(username, udpclient);
-    client.udpClient.connect();
-    int response;
-    response = client.udpClient.waitResponse();
+
+    int response = client.connect();
+
     std::cout << "Response: " << response << std::endl;
     if (response == ACCEPT){
         std::cout << "Conectado com sucesso!" << std::endl;
@@ -39,12 +39,4 @@ int main(int argc, char **argv){
 
     close(client.udpClient.getSocketDesc());
     return 0;
-
-    // FILE * file = fopen("doggo.jpeg", "r");
-    // client.udpClient.sendFile(file);
-    // std::cout << "Mandou a file!\n" << std::endl;
-    // fclose(file);
-    //
-    // close(client.udpClient.getSocketDesc());
-    // return 0;
 }

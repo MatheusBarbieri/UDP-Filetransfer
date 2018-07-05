@@ -56,7 +56,7 @@ UDPServer::~UDPServer(void){
 }
 
 void UDPServer::_bind(){
-    if (bind(socketDesc, (struct sockaddr *) &socketAddrLocal, sizeof(struct sockaddr)) < 0){
+    if (bind(socketDesc, (struct sockaddr *) &  socketAddrLocal, sizeof(struct sockaddr)) < 0){
         std::cout << "[Error] could not bind the given socket. Is adress already bound?" << std::endl;
         exit(0);
     }
@@ -64,6 +64,7 @@ void UDPServer::_bind(){
 
 udpconnection_ptr UDPServer::accept() {
     recDatagram();
+    vlog("Server recebeu connect: dg1");
     int port = generatePort();
     Datagram* recvDg = getRecvbuffer();
     Datagram acceptDatagram;
@@ -71,11 +72,16 @@ udpconnection_ptr UDPServer::accept() {
     acceptDatagram.type = ACCEPT;
     acceptDatagram.seqNumber = port;
 
+    vlog("Server vai mandar o accept dg2");
     int sent = sendDatagram(acceptDatagram);
-    udpconnection_ptr udpconnection(new UDPConnection());
-    udpconnection->socketAddrRemote = socketAddrRemote;
-    udpconnection->socketAddrRemote.sin_port = htons(port);
+    vlog("Server mandou o accept");
 
+    udpconnection_ptr udpconnection(new UDPConnection(port, socketAddrRemote, socketAddrLocal));
+
+    socketAddrLocal.sin_addr.s_addr = INADDR_ANY;
+    bzero(&(socketAddrLocal.sin_zero), 8);
+
+    vlog("Server vai retornar conn");
     return udpconnection;
 }
 
@@ -116,15 +122,18 @@ int UDPClient::connect(){
     zerosDatagram(&connectDatagram);
     connectDatagram.type = CONNECT;
     connectDatagram.seqNumber = -1;
+    vlog("Vai enviar connect: dg1");
     int sent = sendDatagram(connectDatagram);
+    vlog("Enviou connect");
     return sent;
 }
 
 int UDPClient::waitResponse(){
+    vlog("Cliente espera resposta em waitResponse: dg2");
     recDatagram();
     if (getRecvbuffer()->type == ACCEPT){
         Datagram* received = getRecvbuffer();
-        socketAddrRemote.sin_port = received->seqNumber;
+        socketAddrRemote.sin_port = htons(received->seqNumber);
         return ACCEPT;
     }
     return REJECT;
@@ -141,6 +150,24 @@ int UDPSocket::getSocketDesc(){
 ///////////////////////////////////////////////////////////
 ///////////////////// UDPConnection ///////////////////////
 ///////////////////////////////////////////////////////////
+
+UDPConnection::UDPConnection(){}
+
+UDPConnection::UDPConnection(int port, sockaddr_in socketAddrRemote, sockaddr_in socketAddrLocal) {
+    this->socketAddrLocal = socketAddrLocal;
+    this->socketAddrRemote = socketAddrRemote;
+    this->socketAddrRemote.sin_port = htons(port);
+
+    if ((this->socketDesc = socket(AF_INET, SOCK_DGRAM, 0)) == -1){
+        std::cout << "[Error] Could not open a new socket for connection." << std::endl;
+    }
+
+    if (bind(socketDesc, (struct sockaddr *) &  socketAddrLocal, sizeof(struct sockaddr)) < 0){
+        std::cout << "[Error] could not bind the given socket. Is adress already bound?" << std::endl;
+    }
+}
+
+
 
 struct sockaddr_in* UDPConnection::getAddrRemote(){
     return &socketAddrRemote;
@@ -185,7 +212,7 @@ int UDPConnection::sendDatagram(Datagram &dg) {
                      (struct sockaddr *) &socketAddrRemote,
                      &socketSize
             );
-            if (ack.type == ACK && ack.seqNumber == dg.seqNumber){
+            if (ntohl(ack.type) == ACK && ack.seqNumber == dg.seqNumber){
                 break;
             }
         } else{
@@ -267,8 +294,8 @@ int UDPConnection::recDatagram(){
         Datagram ack;
         zerosDatagram(&ack);
 
-        ack.type = ACK;
-        ack.seqNumber = received->seqNumber;
+        ack.type = htonl(ACK);
+        ack.seqNumber = htonl(received->seqNumber);
 
         socklen_t socketFromSize = sizeof(socketAddrRemote);
         sendto(socketDesc,

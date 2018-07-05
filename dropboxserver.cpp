@@ -23,31 +23,48 @@ int main(int argc, char *argv[]){
 
     udpserver_ptr udpserver(new UDPServer(port));
     udpserver->_bind();
+
     while(true){
+        vlog("Server waiting accept");
         udpconnection_ptr conn = udpserver->accept(); //wait for new users
+        vlog("Accept sucess. waiting for username");
+        conn->recDatagram();
+        vlog("Got username");
+        Datagram* userName = conn->getRecvbuffer();
+        std::string username(userName->data);
 
-        // TODO: get username for login/authentication
-        std::string username;
+        user_ptr user;
+        Datagram response;
 
-        auto it = server->getUsers().find(username); //Look if user exists already
+        auto it = server->getUsers().find(username);
         if (it == server->getUsers().end()) {
-            // create user
+            //IF USER DO NOT EXIST
             user_ptr newUser(new User(username));
-            server->getUsers()[username] = std::move(newUser); //Bota o user no map
+            server->getUsers()[username] = newUser;
+
+            response.type = ACCEPT;
+            conn->sendDatagram(response);
+            usersession_ptr session(new UserSession(conn, newUser));
+            newUser->addSession(session);
+            session->thread = std::thread(&UserSession::runSession, session.get());
         } else {
+            //IF USER EXISTS
             user_ptr user(it->second);
             if(!user->canConnect()){
-                // max connections exceeded
+                //IF USER ALREADY HAS 2 ACTIVE SESSIONS
+                response.type = REJECT;
+                conn->sendDatagram(response);
                 conn->close();
-                break;
+                continue;
+            } else {
+                //IF USER CAN CONNECT
+                response.type = ACCEPT;
+                conn->sendDatagram(response);
+                usersession_ptr session(new UserSession(conn, user));
+                user->addSession(session);
+                session->thread = std::thread(&UserSession::runSession, session.get());
             }
         }
-
-        user_ptr user(server->getUsers()[username]);
-
-        usersession_ptr session(new UserSession(conn, user));
-        session->thread = std::thread(&UserSession::runSession, session.get());
-        user->addSession(session);
     }
 
     std::cout << "Gracefully exiting?" << std::endl;

@@ -60,6 +60,9 @@ protected:
     int port;
 
 public:
+    UDPConnection();
+    UDPConnection(int port, sockaddr_in socketAddrRemote, sockaddr_in socketAddrLocal);
+
     struct sockaddr_in socketAddrRemote;
     int sendDatagram(Datagram &dg);
     int recDatagram();

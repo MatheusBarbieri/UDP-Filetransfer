@@ -25,6 +25,30 @@ void Client::startThreads(){
   taskManager.join();
 }
 
+int Client::connect(){
+    vlog("Client tries connect");
+    udpClient.connect();
+    vlog("Client waiting response");
+    int response = udpClient.waitResponse();
+    vlog("Client got response");
+    if (response == ACCEPT){
+        vlog("É um accept");
+        Datagram userName;
+        zerosDatagram(&userName);
+        userName.type = USERNAME;
+        char* name = (char*) username.c_str();
+        memcpy(&userName.data, name, username.size());
+        vlog("Enviando o nome: dg3");
+        udpClient.sendDatagram(userName);
+        vlog("Esperando validação do nome");
+
+        udpClient.recDatagram();
+        Datagram* response = udpClient.getRecvbuffer();
+        return response->type;
+    }
+    return REJECT;
+}
+
 std::string Client::getUsername(){
     return username;
 }
@@ -162,7 +186,6 @@ bool Client::exitTaskManager(){
 }
 
 void Client::uploadFile(std::string filepath){
-    int status;
     Fileinfo info = getFileinfo(filepath);
     Datagram dg;
     Datagram* dgRcv;
@@ -174,14 +197,14 @@ void Client::uploadFile(std::string filepath){
     dg.seqNumber = 0;
     dg.size = sizeof(s_fileinfo);
     udpClient.sendDatagram(dg);
-    status = udpClient.recDatagram();
+    udpClient.recDatagram();
     dgRcv = udpClient.getRecvbuffer();
     if (dgRcv->type == DECLINE) {
         return;
     }
     FILE* file = fopen(filepath.c_str(), "rb");
     udpClient.sendFile(file);
-    status = udpClient.recDatagram();
+    udpClient.recDatagram();
     dgRcv = udpClient.getRecvbuffer();
     struct utimbuf modTime;
     modTime.modtime = ntohl(sinfo->mod);

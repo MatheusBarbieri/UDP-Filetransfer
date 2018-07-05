@@ -34,6 +34,7 @@ public:
     Task getTaskFromQueue();
     void addTaskToQueue(Task task);
 
+    int connect();
     void startThreads();
     void inotifyLoop();
     void commandLoop();

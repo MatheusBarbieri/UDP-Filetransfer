@@ -58,3 +58,7 @@ int Semaphore::post() {
   }
   return status;
 }
+
+void vlog(const char* text){
+    std::cout << text << std::endl;
+}
