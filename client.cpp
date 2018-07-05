@@ -199,17 +199,18 @@ void Client::uploadFile(std::string filepath){
     udpClient.sendDatagram(dg);
     udpClient.recDatagram();
     dgRcv = udpClient.getRecvbuffer();
-    if (dgRcv->type == DECLINE) {
+    if (dgRcv->type != ACCEPT) {
         return;
     }
     FILE* file = fopen(filepath.c_str(), "rb");
     udpClient.sendFile(file);
+    fclose(file);
     udpClient.recDatagram();
     dgRcv = udpClient.getRecvbuffer();
     struct utimbuf modTime;
     modTime.modtime = ntohl(sinfo->mod);
     modTime.actime = modTime.modtime;
-    utime(info.name.c_str(), &modTime);
+    utime(filepath.c_str(), &modTime);
     return;
 }
 
@@ -219,18 +220,32 @@ void Client::downloadFile(std::string filepath){
     Fileinfo info;
     s_fileinfo *sinfo = (s_fileinfo*) dg.data;
     std::string filename = basename(filepath.c_str());
+    sinfo->size = 0;
+    sinfo->mod = 0;
     strncpy(sinfo->name, filename.c_str(), 255);
     dg.type = DOWNLOAD;
     dg.seqNumber = 0;
     dg.size = sizeof(s_fileinfo);
     udpClient.sendDatagram(dg);
+    udpClient.recDatagram();
     dgRcv = udpClient.getRecvbuffer();
     if (dgRcv->type != ACCEPT) {
         return;
     }
+    sinfo = (s_fileinfo*) dgRcv->data;
+
     info.mod = ntohl(sinfo->mod);
     info.size = ntohl(sinfo->size);
 
+    FILE* file = fopen(filepath.c_str(), "wb");
+    udpClient.receiveFile(file);
+    fclose(file);
+
+    struct utimbuf modTime;
+    modTime.modtime = info.mod;
+    modTime.actime = info.mod;
+    utime(filepath.c_str(), &modTime);
+    return;
 }
 
 void Client::taskManager(){
@@ -240,6 +255,7 @@ void Client::taskManager(){
         switch (task.getType()) {
             case DOWNLOAD:
                 std::cout << "Fez download: " << task.getInfo() << std::endl;
+                downloadFile(task.getInfo());
                 break;
             case UPLOAD:
                 std::cout << "Fez upload: " << task.getInfo() << std::endl;

@@ -58,41 +58,52 @@ void UserSession::runSession(){
 
                     // send file's new timestap
                     info = getFileinfo(filepath);
+                    sinfo = (s_fileinfo*) dg.data;
                     sinfo->mod = htonl(info.mod);
                     sinfo->size = htonl(info.size);
                     udpConnection->sendDatagram(dg);
+
+                    // add file to filelist
+                    user->files[info.name] = info;
                     break;
                 }
-/*
-                    int status;
-                    Fileinfo info = getFileinfo(filepath);
-                    Datagram dg;
-                    Datagram* dgRcv;
-                    s_fileinfo *sinfo = (s_fileinfo*) dg.data;
-                    sinfo->mod = htonl(info.mod);
-                    sinfo->size = htonl(info.size);
-                    strncpy(sinfo->name, info.name.c_str(), sizeof(sinfo->name));
-                    dg.type = UPLOAD;
-                    dg.seqNumber = 0;
-                    dg.size = sizeof(s_fileinfo);
-                    udpClient.sendDatagram(dg);
-                    status = udpClient.recDatagram();
-                    dgRcv = udpClient.getRecvbuffer();
-                    if (dgRcv->type == DECLINE) {
-                        return;
-                    }
-                    FILE* file = fopen(filepath.c_str(), "rb");
-                    udpClient.sendFile(file);
-                    status = udpClient.recDatagram();
-                    dgRcv = udpClient.getRecvbuffer();
-                    struct utimbuf modTime;
-                    modTime.modtime = ntohl(sinfo->mod);
-                    modTime.actime = modTime.modtime;
-                    utime(info.name.c_str(), &modTime);
-                    return;*/
                 case DOWNLOAD:
+                {
+                    std::cerr << "DOWNLOAD (sending file)" << '\n';
+                    Datagram dg;
+                    s_fileinfo *sinfo = (s_fileinfo*) message->data;
+                    Fileinfo info;
+                    info.name = sinfo->name;
 
+                    auto it = user->files.find(info.name);
+                    if (it == user->files.end()) {
+                        dg.type = DECLINE;
+                        dg.seqNumber = 0;
+                        dg.size = 0;
+                        udpConnection->sendDatagram(dg);
+                        break;
+                    }
+                    info = it->second;
+
+                    std::string filepath = user->userFolder + info.name;
+                    FILE* file = fopen(filepath.c_str(), "rb");
+                    if (!file) {
+                        dg.type = DECLINE;
+                        dg.seqNumber = 0;
+                        dg.size = 0;
+                        udpConnection->sendDatagram(dg);
+                        break;
+                    }
+
+                    dg.type = ACCEPT;
+                    sinfo = (s_fileinfo*) dg.data;
+                    sinfo->size = htonl(info.size);
+                    sinfo->mod = htonl(info.mod);
+                    udpConnection->sendDatagram(dg);
+                    udpConnection->sendFile(file);
+                    fclose(file);
                     break;
+                }
                 case DELETE:
 
                     break;
