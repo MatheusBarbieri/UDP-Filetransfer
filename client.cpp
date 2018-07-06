@@ -386,8 +386,13 @@ void Client::syncDir(){
             std::cout << "Teste: " << localFileName << std::endl;
             auto it = remoteHistory.find(localFileName);
             if(it == remoteHistory.end()){ //IF file does not exists
-                std::cout << "Tentou apagar" << std::endl;
-                addTaskToQueue(Task(DELETE, localFileName));
+                if (folderVersion) {
+                    std::cout << "Tentou apagar" << std::endl;
+                    addTaskToQueue(Task(DELETE, localFileName));
+                } else {
+                    std::string localFilePath = clientFolder + "/" + localFileName;
+                    addTaskToQueue(Task(UPLOAD, localFilePath));
+                }
             }
         }
         filesMutex.unlock();
