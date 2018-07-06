@@ -43,6 +43,7 @@ void UserSession::runSession(){
                             dg.seqNumber = 0;
                             dg.size = 0;
                             udpConnection->sendDatagram(dg);
+                            std::cerr << "UPLOAD (END)" << '\n';
                             break;
                         }
                     }
@@ -67,6 +68,7 @@ void UserSession::runSession(){
                     user->files[info.name] = info;
                     user->bumpFolderVersion();
                     break;
+                    std::cerr << "UPLOAD (END)" << '\n';
                 }
                 case DOWNLOAD:
                 {
@@ -82,6 +84,7 @@ void UserSession::runSession(){
                         dg.seqNumber = 0;
                         dg.size = 0;
                         udpConnection->sendDatagram(dg);
+                        std::cerr << "DOWNLOAD (END)" << '\n';
                         break;
                     }
                     info = it->second;
@@ -93,6 +96,7 @@ void UserSession::runSession(){
                         dg.seqNumber = 0;
                         dg.size = 0;
                         udpConnection->sendDatagram(dg);
+                        std::cerr << "DOWNLOAD (END)" << '\n';
                         break;
                     }
 
@@ -103,10 +107,10 @@ void UserSession::runSession(){
                     udpConnection->sendDatagram(dg);
                     udpConnection->sendFile(file);
                     fclose(file);
-                    break;
-                }
-                case DELETE:
-                {
+
+                    std::cerr << "DOWNLOAD (END)" << '\n';
+                } break;
+                case DELETE: {
                     std::cerr << "DELETE (purging file)" << '\n';
                     s_fileinfo *sinfo = (s_fileinfo*) message->data;
                     Fileinfo info;
@@ -126,10 +130,20 @@ void UserSession::runSession(){
                     dg.size = 0;
                     udpConnection->sendDatagram(dg);
                     user->bumpFolderVersion();
-                    break;
-                }
+
+                    std::cerr << "DELETE (end)" << '\n';
+                } break;
                 case SERVERDIR: {
+                    std::cerr << "SERVERDIR (sending list of files)" << '\n';
                     int numFiles = user->files.size();
+                    if (numFiles <= 0) {
+                        Datagram numFilesDatagram;
+                        numFilesDatagram.type = SERVERDIR;
+                        numFilesDatagram.seqNumber = 0;
+                        udpConnection->sendDatagram(numFilesDatagram);
+                        std::cerr << "SERVERDIR (end)" << '\n';
+                        break;
+                    }
 
                     s_fileinfo *info = (s_fileinfo*)calloc(numFiles, sizeof(s_fileinfo));
                     memset(info, 0, numFiles * sizeof(s_fileinfo));
@@ -148,10 +162,13 @@ void UserSession::runSession(){
                     udpConnection->sendDatagram(numFilesDatagram);
                     udpConnection->sendMessage((char*) info, sizeof(s_fileinfo) * numFiles);
                     free(info);
+                    std::cerr << "SERVERDIR (end)" << '\n';
                 } break;
                 case FOLDER_VERSION:
+                    std::cerr << "FOLDER_VERSION (start)" << '\n';
                     message->seqNumber = user->getFolderVersion();
                     udpConnection->sendDatagram(*message);
+                    std::cerr << "FOLDER_VERSION (end)" << '\n';
                     break;
                 case EXIT:
                     std::cout << "Exiting Server!" << std::endl;

@@ -245,6 +245,9 @@ std::map<std::string, Fileinfo> Client::getRemoteDirectory(){
     udpClient.recDatagram();
     recData = udpClient.getRecvbuffer();
     numFiles = recData->seqNumber;
+    if (numFiles <= 0) {
+        return std::map<std::string, Fileinfo>();
+    }
     fileInfos = udpClient.receiveMessage();
     int totalSize = udpClient.getRecvMessageSize();
 
