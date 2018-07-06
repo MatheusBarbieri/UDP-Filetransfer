@@ -393,7 +393,11 @@ std::string UDPConnection::receiveString(){
 }
 
 int UDPConnection::sendMessage(char* message, int length){
+    // std::cerr << "<sendMessage Start>" << '\n';
     int numDatagrams = (length/DATASIZE)+1;
+    if ((length%DATASIZE) == 0) {
+        numDatagrams -= 1;
+    }
     Datagram messageDatagram;
     zerosDatagram(&messageDatagram);
     messageDatagram.type = MESSAGE;
@@ -416,6 +420,7 @@ int UDPConnection::sendMessage(char* message, int length){
             sendDatagram(messageDatagram);
         }
     }
+    // std::cerr << "<sendMessage End>" << '\n';
     return status;
 }
 
