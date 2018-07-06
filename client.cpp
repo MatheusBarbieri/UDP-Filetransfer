@@ -442,7 +442,9 @@ void Client::taskManager(){
                 listRemoteDirectory();
                 break;
             case SYNCDIR:
-                // syncDir();
+                std::cerr << "<> taskManager: start syncDir" << '\n';
+                syncDir();
+                std::cerr << "<> taskManager: end syncDir" << '\n';
                 break;
             case EXIT:
                 running = exitTaskManager();
