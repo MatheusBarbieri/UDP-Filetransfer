@@ -280,7 +280,6 @@ void Client::downloadFile(std::string filepath){
     s_fileinfo *sinfo = (s_fileinfo*) dg.data;
     std::string filename = filenameFromPath(filepath);
     std::string foldername = dirnameFromPath(filepath);
-    foldername = foldername + '/';
     info.name = filename;
     sinfo->size = 0;
     sinfo->mod = 0;
@@ -324,13 +323,14 @@ void Client::syncDir(){
 
         for(const auto& remoteFile : remoteHistory){
             std::string remoteFileName = remoteFile.first;
+            std::string localFilePath = clientFolder + "/" + remoteFileName;
 
             auto it = files.find(remoteFileName);
             if(it == files.end()){ //IF file does not exists
-                addTaskToQueue(Task(DOWNLOAD, remoteFileName));
+                addTaskToQueue(Task(DOWNLOAD, localFilePath));
             } else { //IF file exists
                 if(remoteFile.second.mod > it->second.mod){
-                    addTaskToQueue(Task(DOWNLOAD, remoteFileName));
+                    addTaskToQueue(Task(DOWNLOAD, localFilePath));
                 }
             }
         }
