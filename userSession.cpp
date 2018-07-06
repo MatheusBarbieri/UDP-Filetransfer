@@ -36,6 +36,7 @@ void UserSession::runSession(){
                     info.mod = ntohl(sinfo->mod);
                     info.size = ntohl(sinfo->size);
                     info.name = sinfo->name;
+                    std::cerr << info.name << '\n';
                     auto it = user->files.find(info.name);
                     if (it != user->files.end()){
                         if (info.mod == it->second.mod && info.size == it->second.size){
@@ -77,7 +78,7 @@ void UserSession::runSession(){
                     s_fileinfo *sinfo = (s_fileinfo*) message->data;
                     Fileinfo info;
                     info.name = sinfo->name;
-
+                    std::cerr << info.name << '\n';
                     auto it = user->files.find(info.name);
                     if (it == user->files.end()) {
                         dg.type = DECLINE;
@@ -115,6 +116,7 @@ void UserSession::runSession(){
                     s_fileinfo *sinfo = (s_fileinfo*) message->data;
                     Fileinfo info;
                     info.name = sinfo->name;
+                    std::cerr << info.name << '\n';
                     std::string filepath = user->userFolder + info.name;
 
                     auto it = user->files.find(info.name);
@@ -159,6 +161,9 @@ void UserSession::runSession(){
                     Datagram numFilesDatagram;
                     numFilesDatagram.type = SERVERDIR;
                     numFilesDatagram.seqNumber = i;
+                    if (i != numFiles) {
+                        std::cerr << "### ERROR numFiles does not match ###" << '\n';
+                    }
                     udpConnection->sendDatagram(numFilesDatagram);
                     udpConnection->sendMessage((char*) info, sizeof(s_fileinfo) * numFiles);
                     free(info);

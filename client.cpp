@@ -125,31 +125,24 @@ void Client::inotifyLoop(){
     while (running) {
         filesMutex.lock();
         std::map<std::string, Fileinfo> currentFiles = readFolder(clientFolder);
-        std::cerr << "--current inotify" << '\n';
         for (auto now : currentFiles) {
-            std::cerr << now.first << '\n';
             std::string filepath = clientFolder + "/" + now.first;
             auto reg = files.find(now.first);
             if (reg == files.end()) {
                 // UPLOAD
-                std::cerr << "upload " << filepath << '\n';
                 addTaskToQueue(Task(UPLOAD, filepath));
             } else {
                 if (reg->second.mod != now.second.mod) {
                     // UPLOAD
-                    std::cerr << "upload " << filepath << '\n';
                     addTaskToQueue(Task(UPLOAD, filepath));
                 }
             }
         }
-        std::cerr << "--register inotify" << '\n';
 
         for (auto reg : files) {
-            std::cerr << reg.first << '\n';
             auto now = currentFiles.find(reg.first);
             if (now == currentFiles.end()) {
                 // delete
-                std::cerr << "delete " << reg.first << '\n';
                 addTaskToQueue(Task(DELETE, reg.first));
             }
         }
@@ -362,9 +355,9 @@ void Client::downloadFile(std::string filepath){
 void Client::syncDir(){
     std::cout << "--- SYNC_DIR TASK -- START ---" << std::endl;
     int remoteFolderVersion = getFolderVersion();
-    std::map<std::string, Fileinfo> remoteHistory = getRemoteDirectory();
 
     if (folderVersion < remoteFolderVersion){
+        std::map<std::string, Fileinfo> remoteHistory = getRemoteDirectory();
         std::cout << "--- SYNC_DIR TASK -- 1 ---" << std::endl;
         std::cout << "VersionsL: " << folderVersion << std::endl;
         std::cout << "VersionsR: " << remoteFolderVersion << std::endl;
