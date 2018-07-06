@@ -6,6 +6,7 @@
 #include <sys/stat.h>
 #include <dirent.h>
 #include <unistd.h>
+#include <libgen.h>
 #include <map>
 
 #include "util.hpp"
@@ -34,3 +35,5 @@ void printFiles(std::map<std::string, Fileinfo> &files);
 std::map<std::string, Fileinfo> readFolder(std::string path);
 
 Fileinfo getFileinfo(std::string filepath);
+std::string dirnameFromPath(std::string path);
+std::string filenameFromPath(std::string path);

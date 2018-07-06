@@ -90,7 +90,7 @@ Fileinfo getFileinfo(std::string filepath) {
   if (S_ISREG(path_stat.st_mode)) {
     info.mod = path_stat.st_mtime;
     info.size = path_stat.st_size;
-    info.name = basename(fp);
+    info.name = filenameFromPath(filepath);
   }
   return info;
 }
@@ -115,4 +115,18 @@ std::string setUpUserFolder(std::string username){
         std::cout << "No folder found for User.\nCreating Folder:\n\t" << dir << std::endl;
     }
     return dir + "/";
+}
+
+std::string dirnameFromPath(std::string path) {
+    char cpath[255];
+    strncpy(cpath, path.c_str(), 255);
+    std::string dir = dirname(cpath);
+    return dir;
+}
+
+std::string filenameFromPath(std::string path) {
+    char cpath[255];
+    strncpy(cpath, path.c_str(), 255);
+    std::string filename = basename(cpath);
+    return filename;
 }

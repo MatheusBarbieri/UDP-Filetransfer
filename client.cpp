@@ -255,6 +255,8 @@ void Client::uploadFile(std::string filepath){
     modTime.modtime = ntohl(sinfo->mod);
     modTime.actime = modTime.modtime;
     utime(filepath.c_str(), &modTime);
+    info.mod = modTime.modtime;
+    files[info.name] = info;
     return;
 }
 
@@ -263,7 +265,10 @@ void Client::downloadFile(std::string filepath){
     Datagram *dgRcv;
     Fileinfo info;
     s_fileinfo *sinfo = (s_fileinfo*) dg.data;
-    std::string filename = basename(filepath.c_str());
+    std::string filename = filenameFromPath(filepath);
+    std::string foldername = dirnameFromPath(filepath);
+    foldername = foldername + '/';
+    info.name = filename;
     sinfo->size = 0;
     sinfo->mod = 0;
     strncpy(sinfo->name, filename.c_str(), 255);
@@ -289,11 +294,14 @@ void Client::downloadFile(std::string filepath){
     modTime.modtime = info.mod;
     modTime.actime = info.mod;
     utime(filepath.c_str(), &modTime);
+    if (foldername.compare(clientFolder) == 0) {
+        files[info.name] = info;
+    }
     return;
 }
 
 void Client::deleteFile(std::string filename){
-    filename = basename(filename.c_str());
+    filename = filenameFromPath(filename);
     std::string filepath = clientFolder + filename;
     Datagram dg;
     s_fileinfo *sinfo = (s_fileinfo*) dg.data;
