@@ -3,7 +3,7 @@
 User::User(std::string username){
     this->username = username;
     this->userFolder = setUpUserFolder(username);
-    this->folderVersion = 0;
+    this->folderVersion = 1;
     this->files = readFolder(this->userFolder);
 }
 

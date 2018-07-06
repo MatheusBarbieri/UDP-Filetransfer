@@ -23,3 +23,14 @@ std::map<std::string, user_ptr>& Server::getUsers(){
 std::string Server::getServerFolder(){
     return serverFolder;
 }
+
+void Server::master(int masterPort){
+    UDPServer server(masterPort);
+    server._bind();
+    while(true){
+        udpconnection_ptr conn = server.accept();
+        sockaddr_in address = *conn->getAddr();
+        saveServerAddr(address);
+        conn->sendMessage();
+    }
+}

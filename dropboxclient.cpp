@@ -28,13 +28,6 @@ int main(int argc, char **argv){
         return 0;
     }
 
-    // Datagram dg;
-    // std::cout << "Teste\n";
-    // int test = client.udpClient.sendDatagramMaxTries(dg, 5);
-    //
-    // std::cout << "test: " << test << std::endl;
-
-
     client.startThreads();
 
     close(client.udpClient.getSocketDesc());

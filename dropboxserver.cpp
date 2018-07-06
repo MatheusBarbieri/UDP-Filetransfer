@@ -12,14 +12,23 @@
 
 
 int main(int argc, char *argv[]){
-    if (argc < 2) {
-        std::cout << "Usage:\n\t./udpServer <port>" << std::endl;
+    std::string masterIp;
+
+    if (argc < 3) {
+        std::cout << "Usage:\n\t./udpServer <port> <type: master/slave> <master_port> <ip(if slave)>" << std::endl;
         return 0;
     }
 
     int port = atoi(argv[1]);
+    std::string serverType = argv[2];
+    int masterPort = atoi(argv[3]);
+    if (argc == 5){
+        masterIp = argv[4];
+    }
 
     server_ptr server(new Server);
+
+    std::thread masterServer = std::thread(&Server::master, server.get(), masterPort);
 
     udpserver_ptr udpserver(new UDPServer(port));
     udpserver->_bind();

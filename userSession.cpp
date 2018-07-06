@@ -149,6 +149,7 @@ void UserSession::runSession(){
                 } break;
                 case FOLDER_VERSION:
                     message->seqNumber = user->getFolderVersion();
+                    std::cout << "Folder version type: " << message->type << std::endl;
                     udpConnection->sendDatagram(*message);
                     break;
                 case EXIT:

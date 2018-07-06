@@ -23,5 +23,7 @@ public:
     int createUser();
     std::map<std::string, user_ptr>& getUsers();
 
+    void master(int masterPort);
+
     std::string getServerFolder();
 };
