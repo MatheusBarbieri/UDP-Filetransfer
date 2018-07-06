@@ -30,6 +30,7 @@ public:
     int endUserSession();
 
     uint32_t getFolderVersion();
+    void bumpFolderVersion();
     std::string getUserFolder();
     std::string getUsername();
 };

@@ -28,6 +28,11 @@ uint32_t User::getFolderVersion(){
     return folderVersion;
 }
 
+void User::bumpFolderVersion(){
+    folderVersion++;
+}
+
+
 std::string User::getUserFolder(){
     return userFolder;
 }

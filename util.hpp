@@ -15,6 +15,7 @@
 #define EXIT 13
 #define DECLINE 14
 #define USERNAME 15
+#define SYNCDIR 16
 
 class Server;
 class User;

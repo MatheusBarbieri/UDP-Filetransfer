@@ -14,7 +14,7 @@
 int main(int argc, char *argv[]){
     std::string masterIp;
 
-    if (argc < 3) {
+    if (argc < 4) {
         std::cout << "Usage:\n\t./udpServer <port> <type: master/slave> <master_port> <ip(if slave)>" << std::endl;
         return 0;
     }
@@ -29,11 +29,13 @@ int main(int argc, char *argv[]){
 
     server_ptr server(new Server);
 
-    if (!isBackup) {
-        std::thread masterServer = std::thread(&Server::master, server.get(), masterPort);
-    } else {
-        std::thread backupServer = std::thread(&Server::backup, server.get(), masterPort, masterIp);
-    }
+    // if (!isBackup) {
+    //     vlog("Is Master!");
+    //     std::thread masterServer = std::thread(&Server::master, server.get(), masterPort);
+    // } else {
+    //     vlog("Is Backup!");
+    //     std::thread backupServer = std::thread(&Server::backup, server.get(), masterPort, masterIp);
+    // }
 
     udpserver_ptr udpserver(new UDPServer(port));
     udpserver->_bind();

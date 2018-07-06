@@ -65,6 +65,7 @@ void UserSession::runSession(){
 
                     // add file to filelist
                     user->files[info.name] = info;
+                    user->bumpFolderVersion();
                     break;
                 }
                 case DOWNLOAD:
@@ -124,6 +125,7 @@ void UserSession::runSession(){
                     dg.seqNumber = 0;
                     dg.size = 0;
                     udpConnection->sendDatagram(dg);
+                    user->bumpFolderVersion();
                     break;
                 }
                 case SERVERDIR: {
@@ -149,7 +151,6 @@ void UserSession::runSession(){
                 } break;
                 case FOLDER_VERSION:
                     message->seqNumber = user->getFolderVersion();
-                    std::cout << "Folder version type: " << message->type << std::endl;
                     udpConnection->sendDatagram(*message);
                     break;
                 case EXIT:

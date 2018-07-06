@@ -38,7 +38,7 @@ runc:
 	./dropboxclient Barbor localhost 8080
 
 runs:
-	./dropboxserver 8080 master
+	./dropboxserver 8080 master 8081
 
 udp:
 		$(CC) $(CFLAGS) -c udp.cpp -o udp.o

@@ -16,6 +16,7 @@ class Client {
 private:
     std::string username;
     std::string clientFolder;
+    int folderVersion;
 
     std::mutex taskMutex;
     Semaphore taskAllocation;
@@ -35,9 +36,11 @@ public:
     void addTaskToQueue(Task task);
 
     int connect();
+    void syncDir();
     void startThreads();
     void inotifyLoop();
     void commandLoop();
+    void syncDirLoop();
     void taskManager();
 
     uint32_t getFolderVersion();

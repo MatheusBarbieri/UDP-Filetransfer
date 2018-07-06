@@ -7,6 +7,7 @@
 #include <sys/inotify.h>
 #include <sys/types.h>
 #include <utime.h>
+#include <ctime>
 
 #include "client.hpp"
 
@@ -14,6 +15,7 @@ Client::Client(std::string username, UDPClient &udpclient){
     this->udpClient = udpclient;
     this->username = username;
     this->clientFolder = setUpClientFolder(username);
+    this->folderVersion = 0;
     files = readFolder(clientFolder);
 }
 
@@ -21,6 +23,7 @@ void Client::startThreads(){
   running = true;
   std::thread inotifyLoop = std::thread(&Client::inotifyLoop, this);
   std::thread commandLoop = std::thread(&Client::commandLoop, this);
+  std::thread syncDirLoop = std::thread(&Client::syncDirLoop, this);
   std::thread taskManager = std::thread(&Client::taskManager, this);
   taskManager.join();
 }
@@ -156,13 +159,23 @@ void Client::commandLoop(){
     }
 }
 
+
+void Client::syncDirLoop(){
+    while(running){
+        addTaskToQueue(Task(SYNCDIR));
+        sleep(10);
+        vlog("Sync Dir Loop!");
+    }
+}
+
+
 uint32_t Client::getFolderVersion(){
     Datagram message, *recData;
     message.type = FOLDER_VERSION;
     udpClient.sendDatagram(message);
     int status = udpClient.recDatagram();
     recData = udpClient.getRecvbuffer();
-    if (status == 0 and recData->type == FOLDER_VERSION){
+    if (status != 0 and recData->type == FOLDER_VERSION){
         return recData->seqNumber;
     }
     return -1;
@@ -193,10 +206,10 @@ void Client::listRemoteDirectory(){
 std::map<std::string, Fileinfo> Client::getRemoteDirectory(){
     Datagram message, *recData;
     char* fileInfos;
-    int status, numFiles;
+    int numFiles;
     message.type = SERVERDIR;
     udpClient.sendDatagram(message);
-    status = udpClient.recDatagram();
+    udpClient.recDatagram();
     recData = udpClient.getRecvbuffer();
     numFiles = recData->seqNumber;
     fileInfos = udpClient.receiveMessage();
@@ -300,6 +313,46 @@ void Client::downloadFile(std::string filepath){
     return;
 }
 
+void Client::syncDir(){
+    int remoteFolderVersion = getFolderVersion();
+    std::map<std::string, Fileinfo> remoteHistory;
+
+    if (folderVersion < remoteFolderVersion){
+        std::cout << "VersionsL: " << folderVersion << std::endl;
+        std::cout << "VersionsR: " << remoteFolderVersion << std::endl;
+        remoteHistory = getRemoteDirectory();
+
+        for(const auto& remoteFile : remoteHistory){
+            std::string remoteFileName = remoteFile.first;
+
+            auto it = files.find(remoteFileName);
+            if(it == files.end()){ //IF file does not exists
+                addTaskToQueue(Task(DOWNLOAD, remoteFileName));
+            } else { //IF file exists
+                if(remoteFile.second.mod > it->second.mod){
+                    addTaskToQueue(Task(DOWNLOAD, remoteFileName));
+                }
+            }
+        }
+
+        remoteHistory = getRemoteDirectory();
+        for(const auto& localFile : files){
+            std::string localFileName = localFile.first;
+            std::cout << "Teste: " << localFileName << std::endl;
+            auto it = remoteHistory.find(localFileName);
+            if(it == remoteHistory.end()){ //IF file does not exists
+                std::cout << "Tentou apagar" << std::endl;
+                auto eraseIt = files.find(localFileName);
+                files.erase(eraseIt);
+                std::string filepath = getClientFolder() + localFileName;
+                remove(filepath.c_str());
+            }
+        }
+    }
+
+    folderVersion = remoteFolderVersion;
+}
+
 void Client::deleteFile(std::string filename){
     filename = filenameFromPath(filename);
     std::string filepath = clientFolder + filename;
@@ -322,7 +375,6 @@ void Client::deleteFile(std::string filename){
 }
 
 void Client::taskManager(){
-    bool running = true;
     while(running){
         Task task = getTaskFromQueue();
         switch (task.getType()) {
@@ -343,6 +395,9 @@ void Client::taskManager(){
                 break;
             case SERVERDIR:
                 listRemoteDirectory();
+                break;
+            case SYNCDIR:
+                syncDir();
                 break;
             case EXIT:
                 running = exitTaskManager();
