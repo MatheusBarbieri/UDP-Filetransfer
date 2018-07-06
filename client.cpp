@@ -421,6 +421,11 @@ void Client::deleteFile(std::string filename){
     if (dgRcv->type == ACCEPT && access(filepath.c_str(), F_OK) != -1) {
         remove(filepath.c_str());
     }
+
+    auto deleteit = files.find(filename);
+    if (deleteit != files.end()) {
+        files.erase(deleteit);
+    }
 }
 
 void Client::taskManager(){
