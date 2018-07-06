@@ -29,14 +29,12 @@ void UserSession::runSession(){
             switch (message->type) {
                 case UPLOAD:
                 {
-                    std::cerr << "UPLOAD (receiving file)" << '\n';
                     Datagram dg;
                     s_fileinfo *sinfo = (s_fileinfo*) message->data;
                     Fileinfo info;
                     info.mod = ntohl(sinfo->mod);
                     info.size = ntohl(sinfo->size);
                     info.name = sinfo->name;
-                    std::cerr << info.name << '\n';
                     auto it = user->files.find(info.name);
                     if (it != user->files.end()){
                         if (info.mod == it->second.mod && info.size == it->second.size){
@@ -44,7 +42,6 @@ void UserSession::runSession(){
                             dg.seqNumber = 0;
                             dg.size = 0;
                             udpConnection->sendDatagram(dg);
-                            std::cerr << "UPLOAD (END)" << '\n';
                             break;
                         }
                     }
@@ -69,23 +66,19 @@ void UserSession::runSession(){
                     user->files[info.name] = info;
                     user->bumpFolderVersion();
                     break;
-                    std::cerr << "UPLOAD (END)" << '\n';
                 }
                 case DOWNLOAD:
                 {
-                    std::cerr << "DOWNLOAD (sending file)" << '\n';
                     Datagram dg;
                     s_fileinfo *sinfo = (s_fileinfo*) message->data;
                     Fileinfo info;
                     info.name = sinfo->name;
-                    std::cerr << info.name << '\n';
                     auto it = user->files.find(info.name);
                     if (it == user->files.end()) {
                         dg.type = DECLINE;
                         dg.seqNumber = 0;
                         dg.size = 0;
                         udpConnection->sendDatagram(dg);
-                        std::cerr << "DOWNLOAD (END)" << '\n';
                         break;
                     }
                     info = it->second;
@@ -97,7 +90,6 @@ void UserSession::runSession(){
                         dg.seqNumber = 0;
                         dg.size = 0;
                         udpConnection->sendDatagram(dg);
-                        std::cerr << "DOWNLOAD (END)" << '\n';
                         break;
                     }
 
@@ -109,14 +101,11 @@ void UserSession::runSession(){
                     udpConnection->sendFile(file);
                     fclose(file);
 
-                    std::cerr << "DOWNLOAD (END)" << '\n';
                 } break;
                 case DELETE: {
-                    std::cerr << "DELETE (purging file)" << '\n';
                     s_fileinfo *sinfo = (s_fileinfo*) message->data;
                     Fileinfo info;
                     info.name = sinfo->name;
-                    std::cerr << info.name << '\n';
                     std::string filepath = user->userFolder + info.name;
 
                     auto it = user->files.find(info.name);
@@ -133,17 +122,14 @@ void UserSession::runSession(){
                     udpConnection->sendDatagram(dg);
                     user->bumpFolderVersion();
 
-                    std::cerr << "DELETE (end)" << '\n';
                 } break;
                 case SERVERDIR: {
-                    std::cerr << "SERVERDIR (sending list of files)" << '\n';
                     int numFiles = user->files.size();
                     if (numFiles <= 0) {
                         Datagram numFilesDatagram;
                         numFilesDatagram.type = SERVERDIR;
                         numFilesDatagram.seqNumber = 0;
                         udpConnection->sendDatagram(numFilesDatagram);
-                        std::cerr << "SERVERDIR (end)" << '\n';
                         break;
                     }
 
@@ -167,13 +153,10 @@ void UserSession::runSession(){
                     udpConnection->sendDatagram(numFilesDatagram);
                     udpConnection->sendMessage((char*) info, sizeof(s_fileinfo) * numFiles);
                     free(info);
-                    std::cerr << "SERVERDIR (end)" << '\n';
                 } break;
                 case FOLDER_VERSION:
-                    std::cerr << "FOLDER_VERSION (start)" << '\n';
                     message->seqNumber = user->getFolderVersion();
                     udpConnection->sendDatagram(*message);
-                    std::cerr << "FOLDER_VERSION (end)" << '\n';
                     break;
                 case EXIT:
                     std::cout << "Exiting Server!" << std::endl;

@@ -64,7 +64,6 @@ void UDPServer::_bind(){
 
 udpconnection_ptr UDPServer::accept() {
     recDatagram();
-    vlog("Server recebeu connect: dg1");
     int port = generatePort();
     Datagram* recvDg = getRecvbuffer();
     Datagram acceptDatagram;
@@ -72,16 +71,13 @@ udpconnection_ptr UDPServer::accept() {
     acceptDatagram.type = ACCEPT;
     acceptDatagram.seqNumber = port;
 
-    vlog("Server vai mandar o accept dg2");
     int sent = sendDatagram(acceptDatagram);
-    vlog("Server mandou o accept");
 
     udpconnection_ptr udpconnection(new UDPConnection(port, socketAddrRemote, socketAddrLocal));
 
     socketAddrRemote.sin_addr.s_addr = INADDR_ANY;
     bzero(&(socketAddrRemote.sin_zero), 8);
 
-    vlog("Server vai retornar conn");
     return udpconnection;
 }
 
@@ -122,19 +118,16 @@ int UDPClient::connect(){
     zerosDatagram(&connectDatagram);
     connectDatagram.type = CONNECT;
     connectDatagram.seqNumber = -1;
-    vlog("Vai enviar connect: dg1");
     int sent = sendDatagram(connectDatagram);
-    vlog("Enviou connect");
     return sent;
 }
 
 int UDPClient::waitResponse(){
-    vlog("Cliente espera resposta em waitResponse: dg2");
     recDatagram();
     if (getRecvbuffer()->type == ACCEPT){
         Datagram* received = getRecvbuffer();
-        std::cerr << "port = " << received->seqNumber << '\n';
-        std::cerr << "htons(port) = " << htons(received->seqNumber) << '\n';
+        //std::cerr << "port = " << received->seqNumber << '\n';
+        //std::cerr << "htons(port) = " << htons(received->seqNumber) << '\n';
 
         socketAddrRemote.sin_port = htons(received->seqNumber);
         socketAddrLocal.sin_port = htons(received->seqNumber);
@@ -176,8 +169,8 @@ UDPConnection::UDPConnection(int port, sockaddr_in socketAddrRemote, sockaddr_in
     bzero(&(this->socketAddrLocal.sin_zero), 8);
     bzero(&(this->socketAddrRemote.sin_zero), 8);
 
-    std::cerr << "port = " << port << '\n';
-    std::cerr << "htons(port) = " << htons(port) << '\n';
+    //std::cerr << "port = " << port << '\n';
+    //std::cerr << "htons(port) = " << htons(port) << '\n';
 
     if ((this->socketDesc = socket(AF_INET, SOCK_DGRAM, 0)) == -1){
         std::cout << "[Error] Could not open a new socket for connection." << std::endl;

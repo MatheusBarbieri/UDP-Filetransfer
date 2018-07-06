@@ -30,21 +30,20 @@ void Client::startThreads(){
 }
 
 int Client::connect(){
-    vlog("Client tries connect");
+    //vlog("Client tries connect");
     udpClient.connect();
-    vlog("Client waiting response");
+    vlog("Client waiting response...");
     int response = udpClient.waitResponse();
-    vlog("Client got response");
+    vlog("Client got response...");
     if (response == ACCEPT){
-        vlog("É um accept");
+        //vlog("É um accept");
         Datagram userName;
         zerosDatagram(&userName);
         userName.type = USERNAME;
         char* name = (char*) username.c_str();
         memcpy(userName.data, name, username.size());
-        vlog("Enviando o nome: dg3");
         udpClient.sendDatagram(userName);
-        vlog("Esperando validação do nome");
+        vlog("Waiting username validation...");
 
         udpClient.recDatagram();
         Datagram* response = udpClient.getRecvbuffer();
@@ -154,6 +153,7 @@ void Client::inotifyLoop(){
 void Client::commandLoop(){
     std::string command, filename;
     while (true) {
+	usleep(100000);
         std::cout << "> ";
         std::cin >> command;
         std::transform(command.begin(), command.end(), command.begin(), ::tolower);
@@ -191,7 +191,7 @@ void Client::syncDirLoop(){
     while(running){
         addTaskToQueue(Task(SYNCDIR));
         sleep(10);
-        vlog("Sync Dir Loop!");
+        //vlog("Sync Dir Loop!");
     }
 }
 
@@ -210,7 +210,7 @@ uint32_t Client::getFolderVersion(){
 
 bool Client::exitTaskManager(){
     Datagram *recData;
-    int status = udpClient.recDatagram();
+    udpClient.recDatagram();
     recData = udpClient.getRecvbuffer();
     if (recData->type == EXIT){
         return false;
@@ -244,29 +244,22 @@ std::map<std::string, Fileinfo> Client::getRemoteDirectory(){
     }
     fileInfos = udpClient.receiveMessage();
 
-    int totalSize = udpClient.getRecvMessageSize();
+    //int totalSize = udpClient.getRecvMessageSize();
 
     std::map<std::string, Fileinfo> fileList;
 
-    std::cout << "Number of files: " << numFiles << std::endl;
-    std::cout << "TotalSize: " << totalSize << std::endl;
-    std::cout << "struct size: " << sizeof(s_fileinfo) << std::endl;
+    //std::cout << "Number of files: " << numFiles << std::endl;
+    //std::cout << "TotalSize: " << totalSize << std::endl;
+    //std::cout << "struct size: " << sizeof(s_fileinfo) << std::endl;
 
     s_fileinfo* readInfo = (s_fileinfo*) fileInfos;
     Fileinfo info;
-    std::cout << "Teste 1" << std::endl;
     for(int i=0; i<numFiles; i++){
-        std::cout << "Teste 2: " << i << std::endl;
         std::string fileName(readInfo->name);
-        std::cout << "Teste 3: " << fileName << std::endl;
         info.name = fileName;
-        std::cout << "Teste 4: " << info.name << std::endl;
         info.mod = readInfo->mod;
-        std::cout << "Teste 5: " << info.mod << std::endl;
         info.size = readInfo->size;
-        std::cout << "Teste 6: " << info.size << std::endl;
         fileList[fileName] = info;
-        std::cout << "Teste 7" << std::endl;
         readInfo++;
     }
     return fileList;
@@ -340,11 +333,11 @@ void Client::downloadFile(std::string filepath){
     modTime.modtime = info.mod;
     modTime.actime = info.mod;
     utime(filepath.c_str(), &modTime);
-    std::cerr << info.name << '\n';
-    std::cerr << filename << '\n';
-    std::cerr << filepath << '\n';
-    std::cerr << foldername << '\n';
-    std::cerr << clientFolder << '\n';
+    //std::cerr << info.name << '\n';
+    //std::cerr << filename << '\n';
+    //std::cerr << filepath << '\n';
+    //std::cerr << foldername << '\n';
+    //std::cerr << clientFolder << '\n';
     if (foldername.compare(clientFolder) == 0) {
         files[info.name] = info;
     }
@@ -353,14 +346,14 @@ void Client::downloadFile(std::string filepath){
 }
 
 void Client::syncDir(){
-    std::cout << "--- SYNC_DIR TASK -- START ---" << std::endl;
+    //std::cout << "--- SYNC_DIR TASK -- START ---" << std::endl;
     int remoteFolderVersion = getFolderVersion();
 
     if (folderVersion < remoteFolderVersion){
         std::map<std::string, Fileinfo> remoteHistory = getRemoteDirectory();
-        std::cout << "--- SYNC_DIR TASK -- 1 ---" << std::endl;
-        std::cout << "VersionsL: " << folderVersion << std::endl;
-        std::cout << "VersionsR: " << remoteFolderVersion << std::endl;
+        //std::cout << "--- SYNC_DIR TASK -- 1 ---" << std::endl;
+        //std::cout << "VersionsL: " << folderVersion << std::endl;
+        //std::cout << "VersionsR: " << remoteFolderVersion << std::endl;
 
         filesMutex.lock();
 
@@ -377,15 +370,15 @@ void Client::syncDir(){
                 }
             }
         }
-        std::cout << "--- SYNC_DIR TASK -- 2 ---" << std::endl;
+        //std::cout << "--- SYNC_DIR TASK -- 2 ---" << std::endl;
 
         for(const auto& localFile : files){
             std::string localFileName = localFile.first;
-            std::cout << "Teste: " << localFileName << std::endl;
+            //std::cout << "Teste: " << localFileName << std::endl;
             auto it = remoteHistory.find(localFileName);
             if(it == remoteHistory.end()){ //IF file does not exists
                 if (folderVersion) {
-                    std::cout << "Tentou apagar" << std::endl;
+                    //std::cout << "Tentou apagar" << std::endl;
                     addTaskToQueue(Task(DELETE, localFileName));
                 } else {
                     std::string localFilePath = clientFolder + "/" + localFileName;
@@ -396,7 +389,7 @@ void Client::syncDir(){
         filesMutex.unlock();
 
     }
-    std::cout << "--- SYNC_DIR TASK -- END ---" << std::endl;
+    //std::cout << "--- SYNC_DIR TASK -- END ---" << std::endl;
 
     folderVersion = remoteFolderVersion;
 }
@@ -412,14 +405,14 @@ void Client::deleteFile(std::string filename){
     dg.type = DELETE;
     dg.seqNumber = 0;
     dg.size = 0;
-    std::cerr << "deletefile -- sendDatagram (1)" << '\n';
+    //std::cerr << "deletefile -- sendDatagram (1)" << '\n';
     udpClient.sendDatagram(dg);
     Datagram *dgRcv;
-    std::cerr << "deletefile -- recDatagram (2)" << '\n';
+    //std::cerr << "deletefile -- recDatagram (2)" << '\n';
     udpClient.recDatagram();
     dgRcv = udpClient.getRecvbuffer();
 
-    std::cerr << "deletefile -- access (3)" << '\n';
+    //std::cerr << "deletefile -- access (3)" << '\n';
     if (dgRcv->type == ACCEPT && access(filepath.c_str(), F_OK) != -1) {
         remove(filepath.c_str());
     }
@@ -433,45 +426,45 @@ void Client::deleteFile(std::string filename){
 void Client::taskManager(){
     while(running){
         Task task = getTaskFromQueue();
-        std::cerr << "running task" << '\n';
+        //std::cerr << "running task" << '\n';
         switch (task.getType()) {
             case DOWNLOAD:
                 std::cout << "Fazendo download do arquivo: " << task.getInfo() << std::endl;
-                std::cerr << "<> taskManager: start downloadFile" << '\n';
+                //std::cerr << "<> taskManager: start downloadFile" << '\n';
                 downloadFile(task.getInfo());
-                std::cerr << "<> taskManager: end downloadFile" << '\n';
+                //std::cerr << "<> taskManager: end downloadFile" << '\n';
                 break;
             case UPLOAD:
                 std::cout << "Fazendo upload do arquivo: " << task.getInfo() << std::endl;
-                std::cerr << "<> taskManager: start uploadFile" << '\n';
+                //std::cerr << "<> taskManager: start uploadFile" << '\n';
                 uploadFile(task.getInfo());
-                std::cerr << "<> taskManager: end uploadFile" << '\n';
+                //std::cerr << "<> taskManager: end uploadFile" << '\n';
                 break;
             case DELETE:
                 std::cout << "Deletou: " << task.getInfo() << std::endl;
-                std::cerr << "<> taskManager: start deleteFile" << '\n';
+               // std::cerr << "<> taskManager: start deleteFile" << '\n';
                 deleteFile(task.getInfo());
-                std::cerr << "<> taskManager: end deleteFile" << '\n';
+                //std::cerr << "<> taskManager: end deleteFile" << '\n';
                 break;
             case LOCALDIR:
-                std::cerr << "<> taskManager: start listLocalDirectory" << '\n';
+                //std::cerr << "<> taskManager: start listLocalDirectory" << '\n';
                 listLocalDirectory();
-                std::cerr << "<> taskManager: end listLocalDirectory" << '\n';
+                //std::cerr << "<> taskManager: end listLocalDirectory" << '\n';
                 break;
             case SERVERDIR:
-                std::cerr << "<> taskManager: start listRemoteDirectory" << '\n';
+                //std::cerr << "<> taskManager: start listRemoteDirectory" << '\n';
                 listRemoteDirectory();
-                std::cerr << "<> taskManager: end listRemoteDirectory" << '\n';
+                //std::cerr << "<> taskManager: end listRemoteDirectory" << '\n';
                 break;
             case SYNCDIR:
-                std::cerr << "<> taskManager: start syncDir" << '\n';
+                //std::cerr << "<> taskManager: start syncDir" << '\n';
                 syncDir();
-                std::cerr << "<> taskManager: end syncDir" << '\n';
+                //std::cerr << "<> taskManager: end syncDir" << '\n';
                 break;
             case EXIT:
-                std::cerr << "<> taskManager: start exitTaskManager" << '\n';
+                //std::cerr << "<> taskManager: start exitTaskManager" << '\n';
                 running = exitTaskManager();
-                std::cerr << "<> taskManager: end exitTaskManager" << '\n';
+                //std::cerr << "<> taskManager: end exitTaskManager" << '\n';
                 break;
             default:
                 break;

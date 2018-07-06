@@ -20,7 +20,6 @@ int main(int argc, char **argv){
 
     int response = client.connect();
 
-    std::cout << "Response: " << response << std::endl;
     if (response == ACCEPT){
         std::cout << "Conectado com sucesso!" << std::endl;
     } else {
