@@ -40,10 +40,31 @@ std::string Server::getUserNamesText(){
 void Server::master(int masterPort){
     UDPServer server(masterPort);
     server._bind();
+    Datagram dg;
     while(true){
         udpconnection_ptr conn = server.accept();
         addConn(conn);
         std::string names = getUserNamesText();
         conn->sendString(names);
+
+        for (const auto& user: users){
+            memcpy(&dg.data, user.first.c_str(), user.first.size());
+            user_ptr currentUser = user.second;
+            dg.seqNumber = currentUser->files.size();
+            conn->sendDatagram(dg);
+
+            for(const auto& file : currentUser->files){
+                zerosDatagram(&dg);
+                s_fileinfo* sinfo = (s_fileinfo*) dg.data;
+                memcpy(sinfo->name, file.first.c_str(), file.first.size());
+                sinfo->mod = htonl(file.second.mod);
+                sinfo->size = htonl(file.second.size);
+                conn->sendDatagram(dg);
+
+                std::string filePath = currentUser->getUserFolder() + currentUser->getUsername();
+                FILE* fp = fopen(filePath.c_str(), "r");
+                conn->sendFile(fp);
+            }
+        }
     }
 }
