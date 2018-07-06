@@ -159,8 +159,9 @@ void UserSession::runSession(){
                     udpConnection->sendDatagram(*message);
                     break;
                 case EXIT:
-                    std::cout << "Exiting Server!" << std::endl;
+                    std::cout << "Exiting Server!" << std::endl;	
                     udpConnection->sendDatagram(*message);
+                    user->numSessions--;
                     running = false;
                     break;
                 default:

@@ -152,7 +152,7 @@ void Client::inotifyLoop(){
 
 void Client::commandLoop(){
     std::string command, filename;
-    while (true) {
+    while (running) {
 	usleep(100000);
         std::cout << "> ";
         std::cin >> command;
@@ -188,7 +188,7 @@ void Client::commandLoop(){
 
 
 void Client::syncDirLoop(){
-    while(running){
+    while(true){
         addTaskToQueue(Task(SYNCDIR));
         sleep(10);
         //vlog("Sync Dir Loop!");
@@ -209,10 +209,15 @@ uint32_t Client::getFolderVersion(){
 }
 
 bool Client::exitTaskManager(){
+    Datagram message;
+    message.type = EXIT;
+    udpClient.sendDatagram(message);
+
     Datagram *recData;
     udpClient.recDatagram();
     recData = udpClient.getRecvbuffer();
     if (recData->type == EXIT){
+	running = false;
         return false;
     }
     return true;
@@ -462,9 +467,7 @@ void Client::taskManager(){
                 //std::cerr << "<> taskManager: end syncDir" << '\n';
                 break;
             case EXIT:
-                //std::cerr << "<> taskManager: start exitTaskManager" << '\n';
                 running = exitTaskManager();
-                //std::cerr << "<> taskManager: end exitTaskManager" << '\n';
                 break;
             default:
                 break;

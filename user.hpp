@@ -17,8 +17,9 @@ protected:
     std::string username;
     std::string userFolder;
     uint32_t folderVersion;
-    std::vector<usersession_ptr> userSessions;
 public:
+    int numSessions;
+    std::vector<usersession_ptr> userSessions;
     std::map<std::string, Fileinfo> files;
     std::mutex actionMutex;
 

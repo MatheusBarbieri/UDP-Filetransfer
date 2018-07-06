@@ -2,6 +2,7 @@
 
 User::User(std::string username){
     this->username = username;
+    this->numSessions = 0;
     this->userFolder = setUpUserFolder(username);
     this->folderVersion = 1;
     this->files = readFolder(this->userFolder);
@@ -12,11 +13,12 @@ User::~User(){
 }
 
 bool User::canConnect(){
-    return (userSessions.size() < 2);
+    return (numSessions < 2);
 }
 
 int User::addSession(usersession_ptr userSession){
     userSessions.push_back(userSession);
+    numSessions++;
     return 0;
 }
 
