@@ -356,12 +356,11 @@ void Client::downloadFile(std::string filepath){
 
 void Client::syncDir(){
     int remoteFolderVersion = getFolderVersion();
-    std::map<std::string, Fileinfo> remoteHistory;
+    std::map<std::string, Fileinfo> remoteHistory = getRemoteDirectory();
 
     if (folderVersion < remoteFolderVersion){
         std::cout << "VersionsL: " << folderVersion << std::endl;
         std::cout << "VersionsR: " << remoteFolderVersion << std::endl;
-        remoteHistory = getRemoteDirectory();
 
         filesMutex.lock();
 
@@ -378,21 +377,14 @@ void Client::syncDir(){
                 }
             }
         }
-        filesMutex.unlock();
 
-        remoteHistory = getRemoteDirectory();
-
-        filesMutex.lock();
         for(const auto& localFile : files){
             std::string localFileName = localFile.first;
             std::cout << "Teste: " << localFileName << std::endl;
             auto it = remoteHistory.find(localFileName);
             if(it == remoteHistory.end()){ //IF file does not exists
                 std::cout << "Tentou apagar" << std::endl;
-                auto eraseIt = files.find(localFileName);
-                files.erase(eraseIt);
-                std::string filepath = getClientFolder() + localFileName;
-                remove(filepath.c_str());
+                addTaskToQueue(Task(DELETE, localFileName));
             }
         }
         filesMutex.unlock();
@@ -404,7 +396,7 @@ void Client::syncDir(){
 
 void Client::deleteFile(std::string filename){
     filename = filenameFromPath(filename);
-    std::string filepath = clientFolder + filename;
+    std::string filepath = clientFolder + "/" + filename;
     Datagram dg;
     s_fileinfo *sinfo = (s_fileinfo*) dg.data;
     strncpy(sinfo->name, filename.c_str(), 255);
@@ -437,8 +429,8 @@ void Client::taskManager(){
                 uploadFile(task.getInfo());
                 break;
             case DELETE:
-                deleteFile(task.getInfo());
                 std::cout << "Deletou: " << task.getInfo() << std::endl;
+                deleteFile(task.getInfo());
                 break;
             case LOCALDIR:
                 listLocalDirectory();
