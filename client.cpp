@@ -63,65 +63,98 @@ std::string Client::getClientFolder(){
 void Client::inotifyLoop(){
     std::regex ignore_regex("(4913|.*\\.fstmp|.*\\.swpx{0,1}|.*~)$");
     // start inotify
-    int fd = inotify_init();
-    if (fd < 0) {
-        return;
-    }
-    int wd = inotify_add_watch(fd, clientFolder.c_str(),
-    IN_CREATE | IN_DELETE | IN_CLOSE_WRITE | IN_MOVED_TO | IN_MOVED_FROM |
-    IN_DONT_FOLLOW | IN_EXCL_UNLINK);
-    if (wd < 0) {
-        return;
-    }
-    ssize_t len = 0;
-    char buffer[IN_BUF_LEN];
+    // int fd = inotify_init();
+    // if (fd < 0) {
+    //     return;
+    // }
+    // int wd = inotify_add_watch(fd, clientFolder.c_str(),
+    // IN_CREATE | IN_DELETE | IN_CLOSE_WRITE | IN_MOVED_TO | IN_MOVED_FROM |
+    // IN_DONT_FOLLOW | IN_EXCL_UNLINK);
+    // if (wd < 0) {
+    //     return;
+    // }
+    // ssize_t len = 0;
+    // char buffer[IN_BUF_LEN];
+    //
+    // while (running) {
+    //     // read events
+    //     len = read(fd, buffer, IN_BUF_LEN);
+    //     if (len < 0) {
+    //         switch (errno) {
+    //             case EINTR:
+    //             // interrupted by signal
+    //             // exit
+    //             close(fd);
+    //             return;
+    //             break;
+    //             default:
+    //             std::cerr << "inotify problem" << std::endl;
+    //             break;
+    //         }
+    //     }
+    //     ssize_t i = 0;
+    //     // read inotify events
+    //     while (i < len) {
+    //         struct inotify_event *event;
+    //         event = (struct inotify_event *) &buffer[i];
+    //         std::string filename = event->name;
+    //         std::string filepath = clientFolder + "/" + filename;
+    //         if(std::regex_match(filename, ignore_regex)) {
+    //             // ignored
+    //         } else {
+    //             switch (event->mask) {
+    //                 case IN_MOVED_TO: // moved into folder
+    //                 case IN_CLOSE_WRITE: { // modified
+    //                     addTaskToQueue(Task(UPLOAD, filepath));
+    //                 } break;
+    //                 case IN_DELETE: // deleted
+    //                 case IN_MOVED_FROM: { // moved from folder
+    //                     auto it = files.find(filename);
+    //                     if (it != files.end()) {
+    //                         addTaskToQueue(Task(DELETE, filename));
+    //                     }
+    //                 } break;
+    //             }
+    //         }
+    //         i += IN_EVENT_SIZE + event->len;
+    //     }
+    // }
+    // close(fd);
 
     while (running) {
-        // read events
-        len = read(fd, buffer, IN_BUF_LEN);
-        if (len < 0) {
-            switch (errno) {
-                case EINTR:
-                // interrupted by signal
-                // exit
-                close(fd);
-                return;
-                break;
-                default:
-                std::cerr << "inotify problem" << std::endl;
-                break;
-            }
-        }
-        ssize_t i = 0;
-        // read inotify events
-        while (i < len) {
-            struct inotify_event *event;
-            event = (struct inotify_event *) &buffer[i];
-            std::string filename = event->name;
-            std::string filepath = clientFolder + "/" + filename;
-            if(std::regex_match(filename, ignore_regex)) {
-                // ignored
+        filesMutex.lock();
+        std::map<std::string, Fileinfo> currentFiles = readFolder(clientFolder);
+        std::cerr << "--current inotify" << '\n';
+        for (auto now : currentFiles) {
+            std::cerr << now.first << '\n';
+            std::string filepath = clientFolder + "/" + now.first;
+            auto reg = files.find(now.first);
+            if (reg == files.end()) {
+                // UPLOAD
+                std::cerr << "upload " << filepath << '\n';
+                addTaskToQueue(Task(UPLOAD, filepath));
             } else {
-                switch (event->mask) {
-                    case IN_MOVED_TO: // moved into folder
-                    case IN_CLOSE_WRITE: { // modified
-                        addTaskToQueue(Task(UPLOAD, filepath));
-                    } break;
-                    case IN_DELETE: // deleted
-                    case IN_MOVED_FROM: { // moved from folder
-                        filesMutex.lock();
-                        auto it = files.find(filename);
-                        if (it != files.end()) {
-                            addTaskToQueue(Task(DELETE, filename));
-                        }
-                        filesMutex.unlock();
-                    } break;
+                if (reg->second.mod != now.second.mod) {
+                    // UPLOAD
+                    std::cerr << "upload " << filepath << '\n';
+                    addTaskToQueue(Task(UPLOAD, filepath));
                 }
             }
-            i += IN_EVENT_SIZE + event->len;
         }
+        std::cerr << "--register inotify" << '\n';
+
+        for (auto reg : files) {
+            std::cerr << reg.first << '\n';
+            auto now = currentFiles.find(reg.first);
+            if (now == currentFiles.end()) {
+                // delete
+                std::cerr << "delete " << reg.first << '\n';
+                addTaskToQueue(Task(DELETE, reg.first));
+            }
+        }
+        filesMutex.unlock();
+        sleep(1);
     }
-    close(fd);
 }
 
 void Client::commandLoop(){
@@ -185,7 +218,7 @@ bool Client::exitTaskManager(){
     Datagram *recData;
     int status = udpClient.recDatagram();
     recData = udpClient.getRecvbuffer();
-    if (status == 0 and recData->type == EXIT){
+    if (recData->type == EXIT){
         return false;
     }
     return true;
@@ -259,6 +292,7 @@ void Client::uploadFile(std::string filepath){
     if (dgRcv->type != ACCEPT) {
         return;
     }
+    filesMutex.lock();
     FILE* file = fopen(filepath.c_str(), "rb");
     udpClient.sendFile(file);
     fclose(file);
@@ -270,6 +304,7 @@ void Client::uploadFile(std::string filepath){
     utime(filepath.c_str(), &modTime);
     info.mod = modTime.modtime;
     files[info.name] = info;
+    filesMutex.unlock();
     return;
 }
 
@@ -298,6 +333,7 @@ void Client::downloadFile(std::string filepath){
     info.mod = ntohl(sinfo->mod);
     info.size = ntohl(sinfo->size);
 
+    filesMutex.lock();
     FILE* file = fopen(filepath.c_str(), "wb");
     udpClient.receiveFile(file);
     fclose(file);
@@ -306,9 +342,15 @@ void Client::downloadFile(std::string filepath){
     modTime.modtime = info.mod;
     modTime.actime = info.mod;
     utime(filepath.c_str(), &modTime);
+    std::cerr << info.name << '\n';
+    std::cerr << filename << '\n';
+    std::cerr << filepath << '\n';
+    std::cerr << foldername << '\n';
+    std::cerr << clientFolder << '\n';
     if (foldername.compare(clientFolder) == 0) {
         files[info.name] = info;
     }
+    filesMutex.unlock();
     return;
 }
 
@@ -321,6 +363,8 @@ void Client::syncDir(){
         std::cout << "VersionsR: " << remoteFolderVersion << std::endl;
         remoteHistory = getRemoteDirectory();
 
+        filesMutex.lock();
+
         for(const auto& remoteFile : remoteHistory){
             std::string remoteFileName = remoteFile.first;
             std::string localFilePath = clientFolder + "/" + remoteFileName;
@@ -329,13 +373,16 @@ void Client::syncDir(){
             if(it == files.end()){ //IF file does not exists
                 addTaskToQueue(Task(DOWNLOAD, localFilePath));
             } else { //IF file exists
-                if(remoteFile.second.mod > it->second.mod){
+                if(remoteFile.second.mod != it->second.mod){
                     addTaskToQueue(Task(DOWNLOAD, localFilePath));
                 }
             }
         }
+        filesMutex.unlock();
 
         remoteHistory = getRemoteDirectory();
+
+        filesMutex.lock();
         for(const auto& localFile : files){
             std::string localFileName = localFile.first;
             std::cout << "Teste: " << localFileName << std::endl;
@@ -348,6 +395,8 @@ void Client::syncDir(){
                 remove(filepath.c_str());
             }
         }
+        filesMutex.unlock();
+
     }
 
     folderVersion = remoteFolderVersion;
@@ -377,6 +426,7 @@ void Client::deleteFile(std::string filename){
 void Client::taskManager(){
     while(running){
         Task task = getTaskFromQueue();
+        std::cerr << "running task" << '\n';
         switch (task.getType()) {
             case DOWNLOAD:
                 std::cout << "Fazendo download do arquivo: " << task.getInfo() << std::endl;
@@ -397,10 +447,12 @@ void Client::taskManager(){
                 listRemoteDirectory();
                 break;
             case SYNCDIR:
-                syncDir();
+                // syncDir();
                 break;
             case EXIT:
                 running = exitTaskManager();
+                break;
+            default:
                 break;
         }
     }
@@ -416,8 +468,8 @@ Task Client::getTaskFromQueue() {
 }
 
 void Client::addTaskToQueue(Task task) {
-  this->taskAllocation.post();
   this->taskMutex.lock();
   this->taskQueue.push(task);
   this->taskMutex.unlock();
+  this->taskAllocation.post();
 }
