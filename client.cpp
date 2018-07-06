@@ -17,6 +17,7 @@ Client::Client(std::string username, UDPClient &udpclient){
     this->clientFolder = setUpClientFolder(username);
     this->folderVersion = 0;
     files = readFolder(clientFolder);
+    printFiles(files);
 }
 
 void Client::startThreads(){
@@ -249,6 +250,7 @@ std::map<std::string, Fileinfo> Client::getRemoteDirectory(){
         return std::map<std::string, Fileinfo>();
     }
     fileInfos = udpClient.receiveMessage();
+
     int totalSize = udpClient.getRecvMessageSize();
 
     std::map<std::string, Fileinfo> fileList;
@@ -358,10 +360,12 @@ void Client::downloadFile(std::string filepath){
 }
 
 void Client::syncDir(){
+    std::cout << "--- SYNC_DIR TASK -- START ---" << std::endl;
     int remoteFolderVersion = getFolderVersion();
     std::map<std::string, Fileinfo> remoteHistory = getRemoteDirectory();
 
     if (folderVersion < remoteFolderVersion){
+        std::cout << "--- SYNC_DIR TASK -- 1 ---" << std::endl;
         std::cout << "VersionsL: " << folderVersion << std::endl;
         std::cout << "VersionsR: " << remoteFolderVersion << std::endl;
 
@@ -380,6 +384,7 @@ void Client::syncDir(){
                 }
             }
         }
+        std::cout << "--- SYNC_DIR TASK -- 2 ---" << std::endl;
 
         for(const auto& localFile : files){
             std::string localFileName = localFile.first;
@@ -398,6 +403,7 @@ void Client::syncDir(){
         filesMutex.unlock();
 
     }
+    std::cout << "--- SYNC_DIR TASK -- END ---" << std::endl;
 
     folderVersion = remoteFolderVersion;
 }
@@ -413,11 +419,14 @@ void Client::deleteFile(std::string filename){
     dg.type = DELETE;
     dg.seqNumber = 0;
     dg.size = 0;
+    std::cerr << "deletefile -- sendDatagram (1)" << '\n';
     udpClient.sendDatagram(dg);
     Datagram *dgRcv;
+    std::cerr << "deletefile -- recDatagram (2)" << '\n';
     udpClient.recDatagram();
     dgRcv = udpClient.getRecvbuffer();
 
+    std::cerr << "deletefile -- access (3)" << '\n';
     if (dgRcv->type == ACCEPT && access(filepath.c_str(), F_OK) != -1) {
         remove(filepath.c_str());
     }
@@ -435,21 +444,31 @@ void Client::taskManager(){
         switch (task.getType()) {
             case DOWNLOAD:
                 std::cout << "Fazendo download do arquivo: " << task.getInfo() << std::endl;
+                std::cerr << "<> taskManager: start downloadFile" << '\n';
                 downloadFile(task.getInfo());
+                std::cerr << "<> taskManager: end downloadFile" << '\n';
                 break;
             case UPLOAD:
                 std::cout << "Fazendo upload do arquivo: " << task.getInfo() << std::endl;
+                std::cerr << "<> taskManager: start uploadFile" << '\n';
                 uploadFile(task.getInfo());
+                std::cerr << "<> taskManager: end uploadFile" << '\n';
                 break;
             case DELETE:
                 std::cout << "Deletou: " << task.getInfo() << std::endl;
+                std::cerr << "<> taskManager: start deleteFile" << '\n';
                 deleteFile(task.getInfo());
+                std::cerr << "<> taskManager: end deleteFile" << '\n';
                 break;
             case LOCALDIR:
+                std::cerr << "<> taskManager: start listLocalDirectory" << '\n';
                 listLocalDirectory();
+                std::cerr << "<> taskManager: end listLocalDirectory" << '\n';
                 break;
             case SERVERDIR:
+                std::cerr << "<> taskManager: start listRemoteDirectory" << '\n';
                 listRemoteDirectory();
+                std::cerr << "<> taskManager: end listRemoteDirectory" << '\n';
                 break;
             case SYNCDIR:
                 std::cerr << "<> taskManager: start syncDir" << '\n';
@@ -457,7 +476,9 @@ void Client::taskManager(){
                 std::cerr << "<> taskManager: end syncDir" << '\n';
                 break;
             case EXIT:
+                std::cerr << "<> taskManager: start exitTaskManager" << '\n';
                 running = exitTaskManager();
+                std::cerr << "<> taskManager: end exitTaskManager" << '\n';
                 break;
             default:
                 break;
