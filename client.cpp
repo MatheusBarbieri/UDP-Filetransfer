@@ -37,7 +37,7 @@ int Client::connect(){
         zerosDatagram(&userName);
         userName.type = USERNAME;
         char* name = (char*) username.c_str();
-        memcpy(&userName.data, name, username.size());
+        memcpy(userName.data, name, username.size());
         vlog("Enviando o nome: dg3");
         udpClient.sendDatagram(userName);
         vlog("Esperando validação do nome");
@@ -150,22 +150,18 @@ void Client::commandLoop(){
             std::cout << "Encerrando as operações..." << std::endl;
             break;
         }
+        else {
+            std::cout << "Invalid operation." << std::endl;
+        }
     }
 }
 
 uint32_t Client::getFolderVersion(){
     Datagram message, *recData;
     message.type = FOLDER_VERSION;
+    udpClient.sendDatagram(message);
+    int status = udpClient.recDatagram();
     recData = udpClient.getRecvbuffer();
-    int status = udpClient.sendDatagram(message);
-    if (status == 0){
-        int i = 0;
-        while(i < 10){
-            status = udpClient.recDatagram();
-            i++;
-            if (status == 0) break;
-        }
-    }
     if (status == 0 and recData->type == FOLDER_VERSION){
         return recData->seqNumber;
     }
@@ -173,17 +169,65 @@ uint32_t Client::getFolderVersion(){
 }
 
 bool Client::exitTaskManager(){
-    Datagram message, *recData;
+    Datagram *recData;
+    int status = udpClient.recDatagram();
     recData = udpClient.getRecvbuffer();
-    int status = 1;
-    message.type = EXIT;
-    udpClient.sendDatagram(message);
-    status = udpClient.recDatagram();
     if (status == 0 and recData->type == EXIT){
         return false;
     }
     return true;
 }
+
+void Client::listLocalDirectory(){
+    std::cout << "Pasta do usuário local:\n";
+    std::map<std::string, Fileinfo> fileList = readFolder(getClientFolder());
+    printFiles(fileList);
+}
+
+void Client::listRemoteDirectory(){
+    std::cout << "Pasta do usuário remota:\n";
+    std::map<std::string, Fileinfo> fileList = getRemoteDirectory();
+    printFiles(fileList);
+}
+
+std::map<std::string, Fileinfo> Client::getRemoteDirectory(){
+    Datagram message, *recData;
+    char* fileInfos;
+    int status, numFiles;
+    message.type = SERVERDIR;
+    udpClient.sendDatagram(message);
+    status = udpClient.recDatagram();
+    recData = udpClient.getRecvbuffer();
+    numFiles = recData->seqNumber;
+    fileInfos = udpClient.receiveMessage();
+    int totalSize = udpClient.getRecvMessageSize();
+
+    std::map<std::string, Fileinfo> fileList;
+
+    std::cout << "Number of files: " << numFiles << std::endl;
+    std::cout << "TotalSize: " << totalSize << std::endl;
+    std::cout << "struct size: " << sizeof(s_fileinfo) << std::endl;
+
+    s_fileinfo* readInfo = (s_fileinfo*) fileInfos;
+    Fileinfo info;
+    std::cout << "Teste 1" << std::endl;
+    for(int i=0; i<numFiles; i++){
+        std::cout << "Teste 2: " << i << std::endl;
+        std::string fileName(readInfo->name);
+        std::cout << "Teste 3: " << fileName << std::endl;
+        info.name = fileName;
+        std::cout << "Teste 4: " << info.name << std::endl;
+        info.mod = readInfo->mod;
+        std::cout << "Teste 5: " << info.mod << std::endl;
+        info.size = readInfo->size;
+        std::cout << "Teste 6: " << info.size << std::endl;
+        fileList[fileName] = info;
+        std::cout << "Teste 7" << std::endl;
+        readInfo++;
+    }
+    return fileList;
+}
+
 
 void Client::uploadFile(std::string filepath){
     Fileinfo info = getFileinfo(filepath);
@@ -275,11 +319,11 @@ void Client::taskManager(){
         Task task = getTaskFromQueue();
         switch (task.getType()) {
             case DOWNLOAD:
-                std::cout << "Fez download: " << task.getInfo() << std::endl;
+                std::cout << "Fazendo download do arquivo: " << task.getInfo() << std::endl;
                 downloadFile(task.getInfo());
                 break;
             case UPLOAD:
-                std::cout << "Fez upload: " << task.getInfo() << std::endl;
+                std::cout << "Fazendo upload do arquivo: " << task.getInfo() << std::endl;
                 uploadFile(task.getInfo());
                 break;
             case DELETE:
@@ -287,10 +331,10 @@ void Client::taskManager(){
                 std::cout << "Deletou: " << task.getInfo() << std::endl;
                 break;
             case LOCALDIR:
-
+                listLocalDirectory();
                 break;
             case SERVERDIR:
-
+                listRemoteDirectory();
                 break;
             case EXIT:
                 running = exitTaskManager();

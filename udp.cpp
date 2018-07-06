@@ -204,6 +204,7 @@ int UDPConnection::sendDatagram(Datagram &dg) {
 
     Datagram ack;
     Datagram senddg;
+    zerosDatagram(&senddg);
     senddg.type = htonl(dg.type);
     senddg.seqNumber = htonl(dg.seqNumber);
     senddg.size = htonl(dg.size);
@@ -408,7 +409,7 @@ int UDPConnection::sendMessage(char* message, int length){
             messageDatagram.seqNumber = seqNumber;
             messageDatagram.size = numDatagrams;
 
-            memcpy((void *) &messageDatagram.data,
+            memcpy((void *)  messageDatagram.data,
                    (void *) (message + DATASIZE*seqNumber),
                    DATASIZE
             );
@@ -429,18 +430,18 @@ char* UDPConnection::receiveMessage(){
         std::cout << "[Error] Expected a message, got a non-message." << std::endl;
         return NULL;
     }
-    int receivedMessageSize = received->size;
+    uint32_t receivedMessageSize = received->size;
     int numDatagrams = (receivedMessageSize/DATASIZE)+1;
     if (receivedMessageSize%DATASIZE == 0){
         numDatagrams--;
     }
-    char* receivedMessage = (char*) calloc(receivedMessageSize, sizeof(char));
+    char* receivedMessage = (char*) malloc(numDatagrams * DATASIZE);
 
     int seqNumber;
     for(seqNumber=0; seqNumber<numDatagrams; seqNumber++){
         recDatagram();
-        memcpy((void *) (receivedMessage + DATASIZE*seqNumber),
-               (void *) &received->data,
+        memcpy((receivedMessage + DATASIZE * seqNumber),
+               received->data,
                DATASIZE
         );
     }
@@ -473,8 +474,8 @@ int UDPConnection::sendFile(FILE* file){
             fileDatagram.type = DATAGRAM;
             fileDatagram.seqNumber = seqNumber++;
             fileDatagram.size = 0;
-            memcpy((void *) &fileDatagram.data,
-                   (void *) &buffer,
+            memcpy((void *) fileDatagram.data,
+                   (void *) buffer,
                    DATASIZE
             );
         }
@@ -482,8 +483,8 @@ int UDPConnection::sendFile(FILE* file){
             fileDatagram.type = ENDFILE;
             fileDatagram.seqNumber = seqNumber++;
             fileDatagram.size = 0;
-            memcpy((void *) &fileDatagram.data,
-                   (void *) &buffer,
+            memcpy((void *) fileDatagram.data,
+                   (void *) buffer,
                    lastDatagramSize
             );
         }

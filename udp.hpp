@@ -12,7 +12,7 @@
 #include <fstream>
 
 #define DGRAMSIZE 512
-#define DATASIZE (DGRAMSIZE-3*sizeof(int))
+#define DATASIZE (DGRAMSIZE-3*sizeof(int32_t))
 
 #define CONNECT 1
 #define ACK 2

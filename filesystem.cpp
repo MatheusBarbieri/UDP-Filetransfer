@@ -74,7 +74,11 @@ std::map<std::string, Fileinfo> readFolder(std::string path) {
 void printFiles(std::map<std::string, Fileinfo> &files) {
     for (auto const it : files) {
         Fileinfo info = it.second;
-        std::cerr << " - " << info.name << '\n';
+        std::cerr << "* " << info.name << std::endl;;
+        std::cerr << "\t\tFile size: " << info.size << "  bytes" << std::endl;;
+        char timeBuffer[20];
+        strftime(timeBuffer, 20, "%Y-%m-%d %H:%M:%S", localtime(&info.mod));
+        std::cerr << "\t\tFile last mod time: " << timeBuffer << std::endl;;
     }
 }
 

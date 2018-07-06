@@ -130,14 +130,20 @@ void UserSession::runSession(){
                     int numFiles = user->files.size();
 
                     s_fileinfo *info = (s_fileinfo*)calloc(numFiles, sizeof(s_fileinfo));
+                    memset(info, 0, numFiles * sizeof(s_fileinfo));
                     int i = 0;
-                    for (auto const ent : user->files) {
-                        Fileinfo fileinfo = ent.second;
+                    for (auto const fileIt : user->files) {
+                        Fileinfo fileinfo = fileIt.second;
                         strncpy(info[i].name, fileinfo.name.c_str(), 255);
+
                         info[i].mod = htonl(fileinfo.mod);
                         info[i].size = htonl(fileinfo.size);
                         i += 1;
                     }
+                    Datagram numFilesDatagram;
+                    numFilesDatagram.type = SERVERDIR;
+                    numFilesDatagram.seqNumber = i;
+                    udpConnection->sendDatagram(numFilesDatagram);
                     udpConnection->sendMessage((char*) info, sizeof(s_fileinfo) * numFiles);
                     free(info);
                 } break;
@@ -146,6 +152,7 @@ void UserSession::runSession(){
                     udpConnection->sendDatagram(*message);
                     break;
                 case EXIT:
+                    std::cout << "Exiting Server!" << std::endl;
                     udpConnection->sendDatagram(*message);
                     running = false;
                     break;
