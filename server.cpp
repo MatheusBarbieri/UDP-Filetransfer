@@ -4,6 +4,7 @@
 #include <string>
 #include <regex>
 #include <thread>
+#include <sstream>
 #include <sys/inotify.h>
 
 #include "server.hpp"
@@ -24,13 +25,25 @@ std::string Server::getServerFolder(){
     return serverFolder;
 }
 
+void Server::addConn(udpconnection_ptr conn){
+    serverAdresses.push_back(conn);
+}
+
+std::string Server::getUserNamesText(){
+    std::stringstream names;
+    for (const auto& user : users){
+        names << user.first << std::endl;
+    }
+    return names.str();
+}
+
 void Server::master(int masterPort){
     UDPServer server(masterPort);
     server._bind();
     while(true){
         udpconnection_ptr conn = server.accept();
-        sockaddr_in address = *conn->getAddr();
-        saveServerAddr(address);
-        conn->sendMessage();
+        addConn(conn);
+        std::string names = getUserNamesText();
+        conn->sendString(names);
     }
 }

@@ -3,6 +3,7 @@
 #include <mutex>
 #include <queue>
 #include <map>
+#include <list>
 
 #include "udp.hpp"
 #include "util.hpp"
@@ -15,6 +16,7 @@ private:
     std::string serverFolder;
     std::mutex usersMutex;
     std::map<std::string, user_ptr> users;
+    std::list<udpconnection_ptr> serverAdresses;
 
 public:
     Server();
@@ -23,7 +25,9 @@ public:
     int createUser();
     std::map<std::string, user_ptr>& getUsers();
 
+    void addConn(udpconnection_ptr conn);
     void master(int masterPort);
+    std::string getUserNamesText();
 
     std::string getServerFolder();
 };
