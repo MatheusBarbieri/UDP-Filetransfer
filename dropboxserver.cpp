@@ -18,17 +18,22 @@ int main(int argc, char *argv[]){
         std::cout << "Usage:\n\t./udpServer <port> <type: master/slave> <master_port> <ip(if slave)>" << std::endl;
         return 0;
     }
-
+    bool isBackup = false;
     int port = atoi(argv[1]);
     std::string serverType = argv[2];
     int masterPort = atoi(argv[3]);
     if (argc == 5){
         masterIp = argv[4];
+        isBackup = true;
     }
 
     server_ptr server(new Server);
 
-    std::thread masterServer = std::thread(&Server::master, server.get(), masterPort);
+    if (!isBackup) {
+        std::thread masterServer = std::thread(&Server::master, server.get(), masterPort);
+    } else {
+        std::thread backupServer = std::thread(&Server::backup, server.get(), masterPort, masterIp);
+    }
 
     udpserver_ptr udpserver(new UDPServer(port));
     udpserver->_bind();

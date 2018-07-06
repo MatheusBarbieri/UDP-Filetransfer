@@ -27,6 +27,7 @@ public:
 
     void addConn(udpconnection_ptr conn);
     void master(int masterPort);
+    void backup(int masterPort, std::string masterIp);
     std::string getUserNamesText();
 
     std::string getServerFolder();
